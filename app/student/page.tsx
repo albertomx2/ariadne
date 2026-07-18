@@ -32,6 +32,10 @@ import {
 } from "react";
 import { vocabulary } from "@/lib/demo-data";
 import {
+  arasaacPictogramUrl,
+  curatedAacPhotos,
+} from "@/lib/aac-visuals";
+import {
   representationShowsText,
   representationUsesPhotos,
   useAriadne,
@@ -76,52 +80,6 @@ const navItems: Array<{
   { id: "help", label: "Help", icon: CircleHelp },
 ];
 
-const arasaacUrl = (id: number) =>
-  `https://static.arasaac.org/pictograms/${id}/${id}_500.png`;
-
-const curatedPhoto: Record<
-  string,
-  { position: string; sheet: "core" | "action" | "concrete" }
-> = {
-  i: { position: "0% 0%", sheet: "core" },
-  want: { position: "33.333% 0%", sheet: "core" },
-  more: { position: "66.667% 0%", sheet: "core" },
-  different: { position: "100% 0%", sheet: "core" },
-  like: { position: "0% 50%", sheet: "core" },
-  go: { position: "33.333% 50%", sheet: "core" },
-  help: { position: "66.667% 50%", sheet: "core" },
-  stop: { position: "100% 50%", sheet: "core" },
-  break: { position: "0% 100%", sheet: "core" },
-  yes: { position: "33.333% 100%", sheet: "core" },
-  no: { position: "66.667% 100%", sheet: "core" },
-  finished: { position: "100% 100%", sheet: "core" },
-  cut: { position: "0% 0%", sheet: "action" },
-  mix: { position: "33.333% 0%", sheet: "action" },
-  "my-turn": { position: "66.667% 0%", sheet: "action" },
-  wait: { position: "100% 0%", sheet: "action" },
-  play: { position: "0% 50%", sheet: "action" },
-  choose: { position: "33.333% 50%", sheet: "action" },
-  put: { position: "66.667% 50%", sheet: "action" },
-  wake: { position: "100% 50%", sheet: "action" },
-  read: { position: "0% 100%", sheet: "action" },
-  eat: { position: "33.333% 100%", sheet: "action" },
-  drink: { position: "66.667% 100%", sheet: "action" },
-  hello: { position: "100% 100%", sheet: "action" },
-  banana: { position: "0% 0%", sheet: "concrete" },
-  apple: { position: "33.333% 0%", sheet: "concrete" },
-  bowl: { position: "66.667% 0%", sheet: "concrete" },
-  teacher: { position: "100% 0%", sheet: "concrete" },
-  friend: { position: "0% 33.333%", sheet: "concrete" },
-  happy: { position: "33.333% 33.333%", sheet: "concrete" },
-  sad: { position: "66.667% 33.333%", sheet: "concrete" },
-  school: { position: "100% 33.333%", sheet: "concrete" },
-  toilet: { position: "0% 66.667%", sheet: "concrete" },
-  pain: { position: "33.333% 66.667%", sheet: "concrete" },
-  fruit: { position: "66.667% 66.667%", sheet: "concrete" },
-  book: { position: "100% 66.667%", sheet: "concrete" },
-  music: { position: "0% 100%", sheet: "concrete" },
-};
-
 function photoFor(item: VocabularyItem, student: StudentProfile) {
   return (
     student.customPhotos[item.id] ??
@@ -155,7 +113,7 @@ function AacVisual({
         />
       );
     }
-    const curated = curatedPhoto[item.id];
+    const curated = curatedAacPhotos[item.id];
     if (curated) {
       return (
         <span
@@ -177,7 +135,7 @@ function AacVisual({
         alt=""
         height={size}
         priority={item.kind === "core"}
-        src={arasaacUrl(item.arasaacId)}
+        src={arasaacPictogramUrl(item.arasaacId)}
         width={size}
       />
     );
@@ -377,15 +335,17 @@ export default function StudentSpacePage() {
   }, []);
 
   const core = useMemo(
-    () => {
-      const rankedByUse = [...studentVocabulary].sort(
+    () =>
+      studentVocabulary
+        .filter(
+          (item) => (item.customCategory ?? item.category) === "core",
+        )
+        .sort(
         (left, right) =>
           right.usageCount - left.usageCount ||
           (left.stablePosition ?? Number.MAX_SAFE_INTEGER) -
             (right.stablePosition ?? Number.MAX_SAFE_INTEGER),
-      );
-      return rankedByUse.slice(0, 8);
-    },
+        ),
     [studentVocabulary],
   );
 
@@ -405,35 +365,11 @@ export default function StudentSpacePage() {
   if (!student) return null;
 
   const capacity = student.gridColumns * student.gridRows;
-  const safety = studentVocabulary.filter((item) =>
-    ["help", "stop", "break", "no", "pain"].includes(item.id),
-  );
-  const criticalSafety = studentVocabulary.filter((item) =>
-    ["help", "stop"].includes(item.id),
-  );
-  const fitWithSafety = (items: VocabularyItem[]) => {
-    const unique = items.filter(
-      (item, index, list) =>
-        !criticalSafety.some((critical) => critical.id === item.id) &&
-        list.findIndex((candidate) => candidate.id === item.id) === index,
-    );
-    return [
-      ...unique.slice(0, Math.max(0, capacity - criticalSafety.length)),
-      ...criticalSafety,
-    ].slice(0, capacity);
-  };
-
   const talkCategoryItems = studentVocabulary.filter(
     (item) =>
       (item.customCategory ?? item.category) === talkCategory,
   );
-  const talkBoard =
-    talkCategory === "core"
-      ? fitWithSafety([
-          ...core,
-          ...(student.predictionsEnabled ? predictions : safety),
-        ])
-      : fitWithSafety([...talkCategoryItems, ...safety]);
+  const talkBoard = talkCategory === "core" ? core : talkCategoryItems;
   const activityAccessIds = [
     "more",
     "different",

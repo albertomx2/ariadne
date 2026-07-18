@@ -168,9 +168,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="topbar-right">
-            <Link className="button button-secondary" href="/workspace/students">
-              Open student space
-            </Link>
             <button
               aria-expanded={notificationsOpen}
               className={`icon-button notification-button${

@@ -17,7 +17,12 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { Modal } from "@/components/modal";
 import {
+  arasaacPictogramUrl,
+  curatedAacPhotos,
+} from "@/lib/aac-visuals";
+import {
   createId,
+  representationUsesPhotos,
   type BoardCategory,
   type StudentBoardItem,
   type StudentProfile,
@@ -46,10 +51,17 @@ type ItemDraft = {
   attribution?: string;
 };
 
-function visualUrl(item: StudentBoardItem) {
-  if (item.photoUrl) return item.photoUrl;
+function visualUrl(item: StudentBoardItem, student: StudentProfile) {
+  if (representationUsesPhotos(student.representation)) {
+    return (
+      student.customPhotos[item.id] ??
+      student.customPhotos[item.label.toLowerCase()] ??
+      item.photoUrl ??
+      ""
+    );
+  }
   if (item.arasaacId) {
-    return `https://static.arasaac.org/pictograms/${item.arasaacId}/${item.arasaacId}_500.png`;
+    return arasaacPictogramUrl(item.arasaacId);
   }
   return "";
 }
@@ -86,7 +98,11 @@ export function StudentBoardEditor({
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const items = [...student.boardItems]
     .filter((item) => item.categoryId === activeCategory && !item.hidden)
-    .sort((a, b) => a.order - b.order);
+    .sort((a, b) =>
+      activeCategory === "core"
+        ? (b.usageCount ?? 0) - (a.usageCount ?? 0) || a.order - b.order
+        : a.order - b.order,
+    );
 
   function updateItems(boardItems: StudentBoardItem[]) {
     const customPhotos = { ...student.customPhotos };
@@ -332,7 +348,11 @@ export function StudentBoardEditor({
 
       <div className="board-item-grid">
         {items.map((item, index) => {
-          const url = visualUrl(item);
+          const url = visualUrl(item, student);
+          const curated =
+            representationUsesPhotos(student.representation) && !url
+              ? curatedAacPhotos[item.id]
+              : undefined;
           return (
             <article
               draggable
@@ -354,8 +374,14 @@ export function StudentBoardEditor({
                       alt=""
                       height={120}
                       src={url}
-                      unoptimized={Boolean(item.photoUrl)}
+                      unoptimized={representationUsesPhotos(student.representation)}
                       width={120}
+                    />
+                  ) : curated ? (
+                    <span
+                      aria-hidden="true"
+                      className={`board-curated-photo board-curated-${curated.sheet}`}
+                      style={{ backgroundPosition: curated.position }}
                     />
                   ) : (
                     <strong>{item.label}</strong>

@@ -152,6 +152,35 @@
   object-fit: contain;
 }
 
+.board-curated-photo {
+  display: block;
+  width: 92px;
+  height: 92px;
+  background-repeat: no-repeat;
+  border-radius: 9px;
+}
+
+.board-curated-core,
+.board-curated-action {
+  background-size: 400% 300%;
+}
+
+.board-curated-concrete {
+  background-size: 400% 400%;
+}
+
+.board-curated-core {
+  background-image: url("/assets/aac/core-photo-vocabulary-v1.png");
+}
+
+.board-curated-action {
+  background-image: url("/assets/aac/action-photo-vocabulary-v1.png");
+}
+
+.board-curated-concrete {
+  background-image: url("/assets/aac/concrete-photo-vocabulary-v1.png");
+}
+
 .board-item-main > span > strong {
   font-size: 25px;
 }
