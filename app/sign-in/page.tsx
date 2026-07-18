@@ -9,6 +9,7 @@ import {
   Mail,
   QrCode,
   ShieldCheck,
+  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,6 +24,7 @@ export default function SignInPage() {
   const [accountAction, setAccountAction] = useState<"sign-in" | "create">(
     "sign-in",
   );
+  const [educatorName, setEducatorName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [classCode, setClassCode] = useState("");
@@ -166,6 +168,24 @@ export default function SignInPage() {
                 </button>
               </div>
 
+              {accountAction === "create" ? (
+                <div className="field">
+                  <label htmlFor="educator-name">Your name</label>
+                  <div className="input-with-icon">
+                    <UserRound size={18} aria-hidden="true" />
+                    <input
+                      autoComplete="name"
+                      id="educator-name"
+                      name="name"
+                      onChange={(event) => setEducatorName(event.target.value)}
+                      placeholder="Jordan Rivera"
+                      type="text"
+                      value={educatorName}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
               <div className="field">
                 <label htmlFor="educator-email">School email</label>
                 <div className="input-with-icon">
@@ -206,6 +226,13 @@ export default function SignInPage() {
                 className="button button-primary auth-submit"
                 disabled={authPending}
                 onClick={async () => {
+                  if (
+                    accountAction === "create" &&
+                    educatorName.trim().length < 2
+                  ) {
+                    setError("Enter the educator name for this workspace.");
+                    return;
+                  }
                   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                     setError("Enter a valid school email address.");
                     return;
@@ -220,6 +247,7 @@ export default function SignInPage() {
                     accountAction,
                     email,
                     password,
+                    accountAction === "create" ? educatorName.trim() : undefined,
                   );
                   setAuthPending(false);
                   if (result.error) {

@@ -284,6 +284,26 @@ function completeEnoughToReview(draft: ProfileDraft) {
   );
 }
 
+function effectiveSupportsFromSuccessfulMoment(message: string) {
+  const supports: string[] = [];
+  if (/(?:photo|picture|visual).{0,30}(?:step|instruction)|(?:step|instruction).{0,30}(?:photo|picture|visual)/i.test(message)) {
+    supports.push("Show a photo or visual for each step before starting.");
+  }
+  if (/(?:extra|more|additional).{0,20}(?:time|wait)|(?:time|wait).{0,20}(?:extra|more|additional)/i.test(message)) {
+    supports.push("Provide extra processing and response time.");
+  }
+  if (/(?:quiet|calm|low[- ]noise|less noise)/i.test(message)) {
+    supports.push("Keep the immediate work area calm and quiet.");
+  }
+  if (/(?:only|just).{0,12}(?:two|2).{0,20}(?:item|material|choice)|(?:two|2).{0,20}(?:item|material|choice).{0,12}(?:at a time|available)/i.test(message)) {
+    supports.push("Offer only two materials or choices at a time.");
+  }
+  if (/(?:nearby|close by).{0,45}(?:without|did not|didn['’]t).{0,25}(?:prompt|repeat)|(?:without|did not|didn['’]t).{0,25}(?:repeat|frequent).{0,20}prompt/i.test(message)) {
+    supports.push("Keep an adult nearby without repeated prompting.");
+  }
+  return supports;
+}
+
 function preferredReplyLanguage(messages: AiChatMessage[]): ReplyLanguage {
   for (const message of [...messages].reverse()) {
     if (message.role !== "user") continue;
@@ -360,6 +380,11 @@ function buildAssistantReply(
   language: ReplyLanguage,
   messages: AiChatMessage[],
 ) {
+  if (completeEnoughToReview(draft)) {
+    return language === "es"
+      ? `Ya tengo suficiente información funcional para preparar el perfil de ${draft.alias}. He abierto la revisión para que compruebes y edites cada campo antes de crearlo.`
+      : `I now have enough functional information to prepare ${draft.alias}'s profile. I opened the review so you can verify and edit every field before creating it.`;
+  }
   const question = nextProfileQuestion(draft, language, messages);
   if (!question) {
     return language === "es"
@@ -476,6 +501,10 @@ export async function POST(request: Request) {
     const lastUserMessage =
       [...messages].reverse().find((message) => message.role === "user")
         ?.content ?? "";
+    const previousAssistantMessage =
+      [...messages]
+        .reverse()
+        .find((message) => message.role === "assistant")?.content ?? "";
     const language = preferredReplyLanguage(messages);
     if (isLanguageRequest(lastUserMessage)) {
       const reply =
@@ -531,11 +560,23 @@ export async function POST(request: Request) {
     }
     if (
       currentDraft.effectiveSupports.length === 0 &&
-      !/(?:works well|does best|benefits? from|helps? (?:them|her|him)|effective support|funciona bien|le ayuda|se beneficia|apoyo que funciona)/i.test(
+      !/(?:recent moment|momento reciente).{0,90}(?:especially well|especialmente bien)|(?:adults?|environment|adulto|entorno).{0,70}(?:differently|diferente)/i.test(
+        previousAssistantMessage,
+      ) &&
+      !/(?:works well|does (?:best|better)|benefits? from|helps? (?:them|her|him)|effective support|funciona bien|le ayuda|se beneficia|apoyo que funciona)/i.test(
         lastUserMessage,
       )
     ) {
       draft.effectiveSupports = [];
+    }
+    if (
+      draft.effectiveSupports.length === 0 &&
+      /(?:recent moment|momento reciente).{0,90}(?:especially well|especialmente bien)|(?:adults?|environment|adulto|entorno).{0,70}(?:differently|diferente)/i.test(
+        previousAssistantMessage,
+      )
+    ) {
+      draft.effectiveSupports =
+        effectiveSupportsFromSuccessfulMoment(lastUserMessage);
     }
     if (!draft.sensoryNotes) {
       const documentedSensorySupport = draft.effectiveSupports.find((support) =>
@@ -617,10 +658,6 @@ export async function POST(request: Request) {
         (item) => !/(?:continu|keep going|communication mode)/i.test(item),
       );
     }
-    const previousAssistantMessage =
-      [...messages]
-        .reverse()
-        .find((message) => message.role === "assistant")?.content ?? "";
     if (
       !draft.helpMethod &&
       (/help/i.test(previousAssistantMessage) ||
@@ -644,6 +681,26 @@ export async function POST(request: Request) {
       draft.unknowns = draft.unknowns.filter(
         (item) => !/help/i.test(item),
       );
+    }
+    if (
+      !draft.helpMethod &&
+      /help/i.test(previousAssistantMessage) &&
+      /(?:cry|cries|crying|llor|llora|llorar)/i.test(lastUserMessage)
+    ) {
+      draft.helpMethod =
+        "Cries during a difficult activity when help may be needed.";
+      draft.observedPatterns = [
+        ...new Set([
+          ...draft.observedPatterns,
+          "Crying has been observed during difficult activities when adult help may be needed.",
+        ]),
+      ];
+      draft.supportConsiderations = [
+        ...new Set([
+          ...draft.supportConsiderations,
+          "Check the earliest signs of difficulty and model an accessible HELP response before distress escalates.",
+        ]),
+      ];
     }
     const reply = buildAssistantReply(
       currentDraft,

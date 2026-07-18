@@ -74,6 +74,7 @@ export default function NewStudentPage() {
   const [homeLanguage, setHomeLanguage] = useState("English");
   const [speechEnabled, setSpeechEnabled] = useState(true);
   const chatBodyRef = useRef<HTMLDivElement | null>(null);
+  const reviewTriggeredRef = useRef(false);
   const router = useRouter();
   const { addStudent, showToast } = useAriadne();
 
@@ -137,6 +138,10 @@ export default function NewStudentPage() {
         ...nextMessages,
         { role: "assistant", content: result.reply },
       ]);
+      if (result.completeEnoughToReview && !reviewTriggeredRef.current) {
+        reviewTriggeredRef.current = true;
+        setReviewOpen(true);
+      }
       setAssistantState("ready");
     } catch (error) {
       setMessages([
@@ -271,6 +276,42 @@ export default function NewStudentPage() {
   const documentedCount = draftSections.filter(
     ([, value]) => value !== "Not yet documented",
   ).length;
+
+  function setDraftText(
+    field: Exclude<
+      keyof ProfileDraft,
+      | "communicationModes"
+      | "interests"
+      | "effectiveSupports"
+      | "observedPatterns"
+      | "supportConsiderations"
+      | "easierContexts"
+      | "harderContexts"
+      | "emergencyMessages"
+      | "unknowns"
+    >,
+    value: string,
+  ) {
+    setProfileDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  function setDraftList(
+    field:
+      | "communicationModes"
+      | "interests"
+      | "effectiveSupports"
+      | "observedPatterns"
+      | "supportConsiderations",
+    value: string,
+  ) {
+    setProfileDraft((current) => ({
+      ...current,
+      [field]: value
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    }));
+  }
 
   return (
     <div className="page new-profile-page">
@@ -553,25 +594,240 @@ export default function NewStudentPage() {
         size="large"
         title="Review student profile"
       >
-        <div className="profile-review-summary">
-          <div><span>Student alias</span><strong>{alias || profileDraft.alias || "Missing"}</strong></div>
-          <div><span>Grade</span><strong>{grade}</strong></div>
-          <div><span>Representation</span><strong>{method === "conversation" ? representationLabel(representationMode(profileDraft.representation)) : representationLabel(representation)}</strong></div>
-          <div><span>Voice output</span><strong>{speechEnabled ? "On" : "Off"}</strong></div>
-          <div>
-            <span>Home language</span>
-            <strong>
-              {method === "conversation"
-                ? profileDraft.homeLanguage || "Not yet documented"
-                : homeLanguage}
-            </strong>
+        {method === "conversation" ? (
+          <div className="profile-review-editor">
+            <div className="field">
+              <label htmlFor="review-alias">Student alias</label>
+              <input
+                className="input"
+                id="review-alias"
+                onChange={(event) => {
+                  setAlias(event.target.value);
+                  setDraftText("alias", event.target.value);
+                }}
+                value={alias || profileDraft.alias}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="review-grade">Grade</label>
+              <select
+                className="select"
+                id="review-grade"
+                onChange={(event) => setGrade(event.target.value)}
+                value={grade}
+              >
+                <option>Pre-K</option>
+                <option>Kindergarten</option>
+                <option>Grade 1</option>
+                <option>Grade 2</option>
+                <option>Grade 3</option>
+                <option>Grade 4</option>
+                <option>Grade 5</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="review-representation">Representation</label>
+              <select
+                className="select"
+                id="review-representation"
+                onChange={(event) => {
+                  const mode = event.target.value as RepresentationMode;
+                  setRepresentation(mode);
+                  setDraftText("representation", representationLabel(mode));
+                }}
+                value={representationMode(profileDraft.representation)}
+              >
+                <option value="symbols-text">Symbols with text</option>
+                <option value="symbols-only">Symbols without text</option>
+                <option value="photos-text">Photos with text</option>
+                <option value="photos-only">Photos without text</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="review-voice">Voice output</label>
+              <select
+                className="select"
+                id="review-voice"
+                onChange={(event) =>
+                  setSpeechEnabled(event.target.value === "enabled")
+                }
+                value={speechEnabled ? "enabled" : "disabled"}
+              >
+                <option value="enabled">Voice on</option>
+                <option value="disabled">Voice off</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="review-language">Home language</label>
+              <input
+                className="input"
+                id="review-language"
+                onChange={(event) =>
+                  setDraftText("homeLanguage", event.target.value)
+                }
+                placeholder="Not yet documented"
+                value={profileDraft.homeLanguage}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="review-access">Access method</label>
+              <input
+                className="input"
+                id="review-access"
+                onChange={(event) =>
+                  setDraftText("accessMethod", event.target.value)
+                }
+                placeholder="Not yet documented"
+                value={profileDraft.accessMethod}
+              />
+            </div>
+            <div className="field full">
+              <label htmlFor="review-communication">
+                Current communication — one item per line
+              </label>
+              <textarea
+                className="textarea"
+                id="review-communication"
+                onChange={(event) =>
+                  setDraftList("communicationModes", event.target.value)
+                }
+                value={profileDraft.communicationModes.join("\n")}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="review-yes">Yes / agreement</label>
+              <textarea
+                className="textarea"
+                id="review-yes"
+                onChange={(event) =>
+                  setDraftText("yesMethod", event.target.value)
+                }
+                value={profileDraft.yesMethod}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="review-no">No / rejection</label>
+              <textarea
+                className="textarea"
+                id="review-no"
+                onChange={(event) =>
+                  setDraftText("noMethod", event.target.value)
+                }
+                value={profileDraft.noMethod}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="review-help">Help</label>
+              <textarea
+                className="textarea"
+                id="review-help"
+                onChange={(event) =>
+                  setDraftText("helpMethod", event.target.value)
+                }
+                value={profileDraft.helpMethod}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="review-break">Break</label>
+              <textarea
+                className="textarea"
+                id="review-break"
+                onChange={(event) =>
+                  setDraftText("breakMethod", event.target.value)
+                }
+                placeholder="Not yet documented"
+                value={profileDraft.breakMethod}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="review-finished">Finished / transition</label>
+              <textarea
+                className="textarea"
+                id="review-finished"
+                onChange={(event) =>
+                  setDraftText("finishMethod", event.target.value)
+                }
+                placeholder="Not yet documented"
+                value={profileDraft.finishMethod}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="review-understanding">
+                Receptive language
+              </label>
+              <textarea
+                className="textarea"
+                id="review-understanding"
+                onChange={(event) =>
+                  setDraftText("receptiveLanguage", event.target.value)
+                }
+                placeholder="Not yet documented"
+                value={profileDraft.receptiveLanguage}
+              />
+            </div>
+            <div className="field full">
+              <label htmlFor="review-supports">
+                Supports reported to work — one item per line
+              </label>
+              <textarea
+                className="textarea"
+                id="review-supports"
+                onChange={(event) =>
+                  setDraftList("effectiveSupports", event.target.value)
+                }
+                value={profileDraft.effectiveSupports.join("\n")}
+              />
+            </div>
+            <div className="field full">
+              <label htmlFor="review-patterns">
+                Observed patterns — one item per line
+              </label>
+              <textarea
+                className="textarea"
+                id="review-patterns"
+                onChange={(event) =>
+                  setDraftList("observedPatterns", event.target.value)
+                }
+                value={profileDraft.observedPatterns.join("\n")}
+              />
+            </div>
+            <div className="field full review-consideration">
+              <label htmlFor="review-ideas">
+                AI ideas requiring team review — one item per line
+              </label>
+              <textarea
+                className="textarea"
+                id="review-ideas"
+                onChange={(event) =>
+                  setDraftList("supportConsiderations", event.target.value)
+                }
+                value={profileDraft.supportConsiderations.join("\n")}
+              />
+            </div>
+            <div className="field full">
+              <label htmlFor="review-interests">
+                Interests — one item per line
+              </label>
+              <textarea
+                className="textarea"
+                id="review-interests"
+                onChange={(event) =>
+                  setDraftList("interests", event.target.value)
+                }
+                value={profileDraft.interests.join("\n")}
+              />
+            </div>
           </div>
-          <div className="full"><span>Communication</span><strong>{method === "conversation" ? documented(profileDraft.communicationModes) : communication || "Not yet documented"}</strong></div>
-          <div className="full"><span>Yes / no / help</span><strong>{documented(profileDraft.yesMethod)} · {documented(profileDraft.noMethod)} · {documented(profileDraft.helpMethod)}</strong></div>
-          <div className="full"><span>Effective supports</span><strong>{documented(profileDraft.effectiveSupports)}</strong></div>
-          <div className="full"><span>Observed patterns</span><strong>{documented(profileDraft.observedPatterns)}</strong></div>
-          <div className="full review-consideration"><span>AI ideas requiring team review</span><strong>{documented(profileDraft.supportConsiderations)}</strong></div>
-        </div>
+        ) : (
+          <div className="profile-review-summary">
+            <div><span>Student alias</span><strong>{alias || "Missing"}</strong></div>
+            <div><span>Grade</span><strong>{grade}</strong></div>
+            <div><span>Representation</span><strong>{representationLabel(representation)}</strong></div>
+            <div><span>Voice output</span><strong>{speechEnabled ? "On" : "Off"}</strong></div>
+            <div><span>Home language</span><strong>{homeLanguage}</strong></div>
+            <div className="full"><span>Communication</span><strong>{communication || "Not yet documented"}</strong></div>
+          </div>
+        )}
         <div className="draft-guardrail">
           <ShieldCheck size={17} />
           <p>Every field remains editable. Permanent AAC system decisions belong to the learner&apos;s qualified AAC/SLP team.</p>

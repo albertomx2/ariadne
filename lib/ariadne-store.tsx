@@ -16,6 +16,7 @@ import type {
   Student,
   SupportStatus,
 } from "@/types/domain";
+import type { User } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 
 export type RepresentationMode =
@@ -206,6 +207,7 @@ type AriadneContextValue = AriadneState & {
     action: "sign-in" | "create",
     email: string,
     password: string,
+    educatorName?: string,
   ) => Promise<{ error?: string }>;
   signIn: (session: NonNullable<Session>) => void;
   signOut: () => void;
@@ -711,6 +713,31 @@ function normalizeState(saved?: Partial<AriadneState>): AriadneState {
   };
 }
 
+function metadataEducatorName(user: Pick<User, "user_metadata">) {
+  const value = user.user_metadata?.educator_name;
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+function withEducatorIdentity(
+  settings: WorkspaceSettings,
+  educatorName: string,
+  email?: string | null,
+): WorkspaceSettings {
+  return {
+    ...settings,
+    educatorName,
+    members: settings.members.map((member, index) =>
+      member.id === "member-jordan" || index === 0
+        ? {
+            ...member,
+            name: educatorName,
+            email: email || member.email,
+          }
+        : member,
+    ),
+  };
+}
+
 export function AriadneProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AriadneState>(initialState);
   const [hydrated, setHydrated] = useState(false);
@@ -806,7 +833,9 @@ export function AriadneProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    async function connectRemote(user: { id: string; email?: string | null }) {
+    async function connectRemote(
+      user: Pick<User, "id" | "email" | "user_metadata">,
+    ) {
       await disconnectRemote();
       if (cancelled) return;
 
@@ -840,23 +869,46 @@ export function AriadneProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (cancelled) return;
+      const remoteState = snapshot?.state as Partial<AriadneState> | undefined;
+      const educatorName =
+        metadataEducatorName(user) ||
+        remoteState?.settings?.educatorName ||
+        user.email?.split("@")[0] ||
+        initialState.settings.educatorName;
       const accountSession: NonNullable<Session> = {
         kind: "educator",
-        name: user.email?.split("@")[0] || initialState.settings.educatorName,
+        name: educatorName,
         provider: "Ariadne account",
       };
 
-      if (snapshot?.state && Object.keys(snapshot.state).length > 0) {
+      if (remoteState && Object.keys(remoteState).length > 0) {
+        const remoteSettings = withEducatorIdentity(
+          {
+            ...initialState.settings,
+            ...(remoteState.settings ?? {}),
+          },
+          educatorName,
+          user.email,
+        );
         applyingRemote.current = true;
         setState(
           normalizeState({
-            ...(snapshot.state as Partial<AriadneState>),
+            ...remoteState,
+            settings: remoteSettings,
             session: accountSession,
           }),
         );
-        setLastSyncedAt(snapshot.updated_at);
+        setLastSyncedAt(snapshot?.updated_at ?? new Date().toISOString());
       } else {
-        setState((current) => ({ ...current, session: accountSession }));
+        setState((current) => ({
+          ...current,
+          settings: withEducatorIdentity(
+            current.settings,
+            educatorName,
+            user.email,
+          ),
+          session: accountSession,
+        }));
       }
 
       const channel = client
@@ -966,7 +1018,12 @@ export function AriadneProvider({ children }: { children: React.ReactNode }) {
       showToast,
       accountAvailable: Boolean(supabase),
       accountEmail,
-      authenticateEducator: async (action, email, password) => {
+      authenticateEducator: async (
+        action,
+        email,
+        password,
+        educatorName,
+      ) => {
         if (!supabase) {
           return {
             error:
@@ -975,7 +1032,15 @@ export function AriadneProvider({ children }: { children: React.ReactNode }) {
         }
         const { data, error } =
           action === "create"
-            ? await supabase.auth.signUp({ email, password })
+            ? await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                  data: {
+                    educator_name: educatorName?.trim() || undefined,
+                  },
+                },
+              })
             : await supabase.auth.signInWithPassword({ email, password });
         if (!error && action === "create" && !data.session) {
           return {
