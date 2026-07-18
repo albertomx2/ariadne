@@ -5,6 +5,7 @@
   background: var(--student-bg);
   font-family: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
   font-size: calc(16px * var(--student-text-scale, 1));
+  text-transform: uppercase;
 }
 
 .student-topbar {
@@ -121,6 +122,14 @@
   border-radius: 9px;
   font-size: 14px;
   font-weight: 700;
+}
+
+.message-token.speaking {
+  color: #102f29;
+  background: #f6d36f;
+  border-color: #b37b18;
+  box-shadow: 0 0 0 4px rgb(229 182 81 / 30%);
+  transform: translateY(-2px);
 }
 
 .message-token-picture,
@@ -460,18 +469,46 @@
   min-height: 152px;
   grid-template-rows: 1fr auto;
   gap: 5px;
-  padding: 9px;
+  padding: 0;
   overflow: hidden;
   background: white;
   border: 3px solid #c9d2ca;
   border-radius: 13px;
+}
+
+.aac-cell-main {
+  display: grid;
+  width: 100%;
+  min-height: inherit;
+  grid-template-rows: 1fr auto;
+  gap: 5px;
+  padding: 9px;
+  color: inherit;
+  background: transparent;
+  border: 0;
   cursor: pointer;
 }
 
-.aac-cell:active {
+.aac-cell-main:active {
   background: #eef6f3;
-  border-color: #287265;
   transform: scale(0.985);
+}
+
+.aac-hear {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: #174f45;
+  background: rgb(255 255 255 / 94%);
+  border: 2px solid #90bdb2;
+  border-radius: 50%;
+  box-shadow: 0 2px 7px rgb(23 34 31 / 14%);
+  cursor: pointer;
 }
 
 .aac-picture {
@@ -550,7 +587,7 @@
 .aac-cell.predicted::after {
   position: absolute;
   top: 7px;
-  right: 7px;
+  left: 7px;
   width: 8px;
   height: 8px;
   background: #6667b8;
@@ -676,7 +713,7 @@
 .student-day-list article {
   display: grid;
   min-height: 86px;
-  grid-template-columns: 76px 58px 1fr 54px;
+  grid-template-columns: 76px 112px 1fr 54px;
   align-items: center;
   gap: 13px;
   padding: 10px 14px;
@@ -685,10 +722,41 @@
   border-radius: 14px;
 }
 
-.student-day-list article > time {
-  color: #53645e;
-  font-size: 14px;
-  font-weight: 800;
+.child-time {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+}
+
+.child-time > strong {
+  color: #38534c;
+  font-size: 11px;
+  text-align: center;
+}
+
+.visual-timer {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  background: conic-gradient(
+    #287265 var(--time-remaining),
+    #e4e8e3 var(--time-remaining)
+  );
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #b9c9c1;
+}
+
+.visual-timer i {
+  width: 31px;
+  height: 31px;
+  background: white;
+  border-radius: 50%;
+}
+
+.visual-timer.finished {
+  background: #cdd5cf;
 }
 
 .student-day-list article.now {
@@ -1067,7 +1135,8 @@
   }
 
   .aac-categories button > span {
-    display: none;
+    width: 24px;
+    height: 24px;
   }
 
   .aac-grid {
@@ -1093,8 +1162,28 @@
     min-height: 84px;
   }
 
-  .aac-cell > span:last-child {
-    font-size: 16px;
+  .student-day-list article {
+    grid-template-columns: 60px 76px 1fr;
+    gap: 8px;
+  }
+
+  .student-day-list article > button {
+    display: none;
+  }
+
+  .day-activity-visual {
+    width: 58px;
+    height: 58px;
+  }
+
+  .visual-timer {
+    width: 48px;
+    height: 48px;
+  }
+
+  .visual-timer i {
+    width: 25px;
+    height: 25px;
   }
 
   .student-nav {

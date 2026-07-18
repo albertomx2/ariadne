@@ -5,6 +5,7 @@ type SpeechOptions = {
   voice: SpeechVoice;
   language: string;
   onStatus?: (status: "speaking" | "ready") => void;
+  onBoundary?: (charIndex: number) => void;
 };
 
 function preferredSystemVoice(language: string) {
@@ -50,6 +51,7 @@ export async function speakNaturally(text: string, options: SpeechOptions) {
   const voice = preferredSystemVoice(options.language);
   if (voice) utterance.voice = voice;
   utterance.onstart = () => options.onStatus?.("speaking");
+  utterance.onboundary = (event) => options.onBoundary?.(event.charIndex);
   utterance.onend = () => options.onStatus?.("ready");
   utterance.onerror = () => options.onStatus?.("ready");
   // Give immediate visual feedback and invoke the device TTS in the same user

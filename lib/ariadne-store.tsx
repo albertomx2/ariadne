@@ -77,6 +77,7 @@ export type StudentBoardItem = {
   photoUrl?: string;
   photoSourceUrl?: string;
   attribution?: string;
+  usageCount?: number;
   hidden?: boolean;
 };
 
@@ -378,6 +379,7 @@ const defaultBoardItems: StudentBoardItem[] = vocabulary.map((item, index) => ({
   order: item.stablePosition ?? index,
   visualType: "inherit",
   arasaacId: item.arasaacId,
+  usageCount: 0,
 }));
 
 function withDefaultBoard(student: StudentProfile): StudentProfile {

@@ -35,16 +35,19 @@ import {
   representationShowsText,
   representationUsesPhotos,
   useAriadne,
+  type AriadneActivity,
   type StudentProfile,
 } from "@/lib/ariadne-store";
-import { rankFringeVocabulary, stableCore } from "@/lib/predictive-ranking";
+import { rankFringeVocabulary } from "@/lib/predictive-ranking";
 import {
   activitiesForStudent,
   activeActivity,
   activeOrNextActivity,
+  activityEnd,
   formatDay,
   formatTime,
   localDateKey,
+  parseActivityStart,
   timingForActivity,
   vocabularyForActivity,
   withNextTiming,
@@ -189,29 +192,43 @@ function AacVisual({
 function AacCell({
   item,
   onSelect,
+  onSpeak,
   predicted = false,
   student,
 }: {
   item: VocabularyItem;
   onSelect: (item: VocabularyItem) => void;
+  onSpeak: (item: VocabularyItem) => void;
   predicted?: boolean;
   student: StudentProfile;
 }) {
   const usesPhoto = representationUsesPhotos(student.representation);
   return (
-    <button
-      aria-label={item.label}
-      className={`aac-cell aac-${item.kind}${predicted ? " predicted" : ""}`}
-      onClick={() => onSelect(item)}
-      type="button"
-    >
-      <span className={`aac-picture${usesPhoto ? " photo" : ""}`}>
-        <AacVisual item={item} student={student} />
-      </span>
-      {representationShowsText(student.representation) ? (
-        <span className="aac-label">{item.label}</span>
+    <div className={`aac-cell aac-${item.kind}${predicted ? " predicted" : ""}`}>
+      <button
+        aria-label={item.label}
+        className="aac-cell-main"
+        onClick={() => onSelect(item)}
+        type="button"
+      >
+        <span className={`aac-picture${usesPhoto ? " photo" : ""}`}>
+          <AacVisual item={item} student={student} />
+        </span>
+        {representationShowsText(student.representation) ? (
+          <span className="aac-label">{item.label}</span>
+        ) : null}
+      </button>
+      {student.speechEnabled ? (
+        <button
+          aria-label={`Hear ${item.label}`}
+          className="aac-hear"
+          onClick={() => onSpeak(item)}
+          type="button"
+        >
+          <Volume2 aria-hidden="true" size={18} />
+        </button>
       ) : null}
-    </button>
+    </div>
   );
 }
 
@@ -237,6 +254,39 @@ function timeOfDay(date: Date): "morning" | "midday" | "afternoon" {
   return "afternoon";
 }
 
+function childTimeLabel(
+  activity: AriadneActivity,
+  timing: "finished" | "now" | "next" | "later",
+  hasCurrentActivity: boolean,
+) {
+  if (timing === "finished") return "DONE";
+  if (timing === "now") return "NOW";
+  if (timing === "next") return hasCurrentActivity ? "AFTER THIS" : "NEXT";
+  const searchable = `${activity.title} ${activity.context}`.toLowerCase();
+  if (searchable.includes("lunch")) return "LUNCH";
+  if (searchable.includes("recess")) return "RECESS";
+  if (parseActivityStart(activity).getHours() >= 12) return "AFTER LUNCH";
+  return "LATER";
+}
+
+function visualTimeRemaining(activity: AriadneActivity, timing: string, now: Date) {
+  if (timing === "now") {
+    const duration = Math.max(
+      1,
+      activityEnd(activity).getTime() - parseActivityStart(activity).getTime(),
+    );
+    return Math.max(
+      0,
+      Math.min(100, ((activityEnd(activity).getTime() - now.getTime()) / duration) * 100),
+    );
+  }
+  if (timing === "next") {
+    const untilStart = parseActivityStart(activity).getTime() - now.getTime();
+    return Math.max(0, Math.min(100, (untilStart / 3_600_000) * 100));
+  }
+  return timing === "finished" ? 0 : 100;
+}
+
 export default function StudentSpacePage() {
   const {
     students,
@@ -248,6 +298,7 @@ export default function StudentSpacePage() {
     showToast,
     hydrated,
     session,
+    updateStudent,
   } = useAriadne();
   const router = useRouter();
   const student =
@@ -257,6 +308,7 @@ export default function StudentSpacePage() {
   const [message, setMessage] = useState<VocabularyItem[]>([]);
   const [step, setStep] = useState(1);
   const [voiceState, setVoiceState] = useState<VoiceState>("ready");
+  const [speakingWordIndex, setSpeakingWordIndex] = useState<number | null>(null);
   const [now, setNow] = useState(() => new Date());
   const studentVocabulary = useMemo(() => {
     if (!student?.boardItems?.length) return vocabulary;
@@ -269,7 +321,7 @@ export default function StudentSpacePage() {
           id: item.id,
           label: item.label,
           kind: item.kind,
-          usageCount: original?.usageCount ?? 0,
+          usageCount: item.usageCount ?? 0,
           stablePosition:
             item.categoryId === "core" ? item.order : original?.stablePosition,
           category: original?.category,
@@ -325,10 +377,15 @@ export default function StudentSpacePage() {
   }, []);
 
   const core = useMemo(
-    () =>
-      stableCore(studentVocabulary)
-        .filter((item) => item.stablePosition !== undefined)
-        .slice(0, 8),
+    () => {
+      const rankedByUse = [...studentVocabulary].sort(
+        (left, right) =>
+          right.usageCount - left.usageCount ||
+          (left.stablePosition ?? Number.MAX_SAFE_INTEGER) -
+            (right.stablePosition ?? Number.MAX_SAFE_INTEGER),
+      );
+      return rankedByUse.slice(0, 8);
+    },
     [studentVocabulary],
   );
 
@@ -405,12 +462,41 @@ export default function StudentSpacePage() {
     setMessage((current) => [...current, item]);
   }
 
-  function speak(text?: string) {
+  function recordPlayedPhrase(items: VocabularyItem[]) {
+    if (!items.length) return;
+    const increments = new Map<string, number>();
+    items.forEach((item) =>
+      increments.set(item.id, (increments.get(item.id) ?? 0) + 1),
+    );
+    updateStudent(student.id, {
+      boardItems: student.boardItems.map((item) => ({
+        ...item,
+        usageCount: (item.usageCount ?? 0) + (increments.get(item.id) ?? 0),
+      })),
+    });
+  }
+
+  function speak(text?: string, trackedItems?: VocabularyItem[]) {
     const phrase = text ?? message.map((item) => item.label).join(" ");
     if (!phrase) return;
     if (!student.speechEnabled) {
       showToast("Speech output is off in this learner profile.");
       return;
+    }
+    const ranges = trackedItems
+      ? trackedItems.map((item, index) => ({
+          index,
+          start: trackedItems
+            .slice(0, index)
+            .reduce((total, entry) => total + entry.label.length + 1, 0),
+          end: trackedItems
+            .slice(0, index + 1)
+            .reduce((total, entry) => total + entry.label.length + 1, 0),
+        }))
+      : [];
+    if (trackedItems?.length) {
+      setSpeakingWordIndex(0);
+      recordPlayedPhrase(trackedItems);
     }
     void speakNaturally(phrase, {
       rate: student.speechRate,
@@ -418,7 +504,16 @@ export default function StudentSpacePage() {
       language: student.homeLanguage.toLowerCase().startsWith("spanish")
         ? "es-US"
         : "en-US",
-      onStatus: setVoiceState,
+      onBoundary: (charIndex) => {
+        const range = ranges.find(
+          (item) => charIndex >= item.start && charIndex < item.end,
+        );
+        if (range) setSpeakingWordIndex(range.index);
+      },
+      onStatus: (status) => {
+        setVoiceState(status);
+        if (status === "ready") setSpeakingWordIndex(null);
+      },
     });
   }
 
@@ -497,7 +592,12 @@ export default function StudentSpacePage() {
               <div className="message-words" aria-live="polite">
                 {message.length ? (
                   message.map((item, index) => (
-                    <span className="message-token" key={`${item.id}-${index}`}>
+                    <span
+                      className={`message-token${
+                        speakingWordIndex === index ? " speaking" : ""
+                      }`}
+                      key={`${item.id}-${index}`}
+                    >
                       <span className="message-token-picture">
                         <AacVisual item={item} size={54} student={student} />
                       </span>
@@ -515,7 +615,7 @@ export default function StudentSpacePage() {
               <button
                 className="message-action speak"
                 disabled={!message.length || !student.speechEnabled}
-                onClick={() => speak()}
+                onClick={() => speak(undefined, message)}
                 type="button"
               >
                 <Volume2 size={25} />
@@ -644,6 +744,7 @@ export default function StudentSpacePage() {
                     item={item}
                     key={item.id}
                     onSelect={selectWord}
+                    onSpeak={(word) => speak(word.label)}
                     predicted={
                       tab === "talk" &&
                       student.predictionsEnabled &&
@@ -692,7 +793,32 @@ export default function StudentSpacePage() {
                         <CalendarDays size={34} />
                       )}
                     </span>
-                    <time>{formatTime(activity.time)}</time>
+                    <div className="child-time">
+                      <span
+                        aria-label={`${Math.round(
+                          visualTimeRemaining(activity, timing, now),
+                        )} percent of the wait remaining`}
+                        className={`visual-timer ${timing}`}
+                        style={
+                          {
+                            "--time-remaining": `${visualTimeRemaining(
+                              activity,
+                              timing,
+                              now,
+                            ) * 3.6}deg`,
+                          } as CSSProperties
+                        }
+                      >
+                        <i />
+                      </span>
+                      <strong>
+                        {childTimeLabel(
+                          activity,
+                          timing,
+                          Boolean(currentActivity),
+                        )}
+                      </strong>
+                    </div>
                     <div>
                       <strong>{activity.title}</strong>
                       <span>

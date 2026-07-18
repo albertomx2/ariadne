@@ -74,6 +74,10 @@ compliance, or speaks automatically on the learner's behalf.
   - photos without text.
 - Independent speech on/off control and speech rate.
 - Learner-initiated message construction and speech.
+- Per-word listening controls and word-by-word highlighting during phrase
+  playback.
+- A usage-informed Core section that updates only after the learner chooses to
+  play a completed phrase.
 - Context suggestions that never speak or select for the learner.
 - `Talk`: the learner's stable general communication board.
 - `Activity`: activity-specific vocabulary selected by the activity draft and
@@ -82,7 +86,9 @@ compliance, or speaks automatically on the learner's behalf.
 - `My Steps`: semantic multi-symbol instructions, such as separate `cut` and
   `banana` concepts.
 - `Help`: always-available self-advocacy and emergency language.
-- Time-aware Finished, Now, Next, and Later states based on the device clock.
+- Child-readable schedule relationships such as Now, Next, After This, Later,
+  Lunch, and After Lunch, plus circular visual countdowns.
+- Uppercase learner-facing text throughout Student Space.
 
 ## Implemented status workflow
 
