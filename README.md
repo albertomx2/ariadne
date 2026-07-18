@@ -181,6 +181,9 @@ Models. Its fine-grained token belongs to `albertomx2` and has only the
 account-level `Models: read` permission. The token stays server-side in Vercel.
 Paid GitHub Models usage is not enabled: free requests are rate-limited and
 stop when the included quota is exhausted rather than generating a charge.
+The current hackathon token expires on **August 17, 2026**. Rotate it in the
+`albertomx2` GitHub account and replace `GITHUB_MODELS_TOKEN` in Vercel before
+that date to keep hosted AI available.
 
 Local development falls back to Qwen 2.5 7B through Ollama when no hosted
 provider token is present:
