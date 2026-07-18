@@ -12,7 +12,7 @@ code, code comments, sample content, terminology, dates, and product assumptions
 use American English. The included learner records are fictional.
 
 - Source: <https://github.com/albertomx2/ariadne>
-- Dynamic demo: <https://ariadne-inclusive.amartinez345.chatgpt.site>
+- Public Vercel demo: <https://ariadne-opal.vercel.app>
 
 ## What Ariadne is
 
@@ -47,8 +47,8 @@ compliance, or speaks automatically on the learner's behalf.
 - Student directory with real create, edit, and delete behavior.
 - Functional profiles covering communication, representation, access,
   effective supports, interests, emergency communication, and classroom notes.
-- Guided profile conversation powered by a local LLM, with a live structured
-  draft and educator review.
+- Guided profile conversation powered by a schema-constrained hosted or local
+  LLM, with a live structured draft and educator review.
 - Structured profile form as a non-AI alternative.
 - Student-specific AAC board editor for categories, vocabulary, order,
   visibility, ARASAAC symbols, and teacher-selected photos.
@@ -171,13 +171,14 @@ allows an educator to select or upload a clearer photo for a word.
 
 ### Public and local providers
 
-The public deployment uses GPT-5 mini through Vercel AI Gateway. Vercel
-authenticates server-side requests with its deployment OIDC token, so no AI key
-is exposed to the browser. The account remains on AI Gateway's free monthly
-credit and has no purchased credits or automatic paid top-up.
+The public hackathon deployment uses `openai/gpt-4.1-mini` through GitHub
+Models. Its fine-grained token belongs to `albertomx2` and has only the
+account-level `Models: read` permission. The token stays server-side in Vercel.
+Paid GitHub Models usage is not enabled: free requests are rate-limited and
+stop when the included quota is exhausted rather than generating a charge.
 
-Local development falls back to Qwen 2.5 7B through Ollama when neither
-`AI_GATEWAY_API_KEY` nor `VERCEL_OIDC_TOKEN` is present:
+Local development falls back to Qwen 2.5 7B through Ollama when no hosted
+provider token is present:
 
 ```bash
 ollama pull qwen2.5:7b
@@ -285,7 +286,8 @@ selection.
 - React 19
 - TypeScript 5
 - Supabase Auth, PostgreSQL, RLS, and Realtime
-- Vercel AI Gateway with GPT-5 mini
+- GitHub Models with GPT-4.1 mini for the public hackathon demo
+- optional Vercel AI Gateway adapter
 - Ollama with Qwen 2.5 7B as a local fallback
 - ARASAAC API
 - Web Speech synthesis
@@ -307,7 +309,7 @@ components/               Shared UI and AAC board editor
 lib/
   ai-access.ts            Educator-session guard for hosted AI
   ai-contracts.ts         Structured AI response contracts
-  ai-provider.ts          Vercel AI Gateway / local Ollama adapter
+  ai-provider.ts          GitHub Models / Vercel Gateway / Ollama adapter
   ariadne-store.tsx       Local/remote state and Realtime synchronization
   predictive-ranking.ts   Transparent AAC suggestion ranking
   schedule.ts             Time-aware schedule logic
@@ -327,7 +329,7 @@ Requirements:
 
 - Node.js 20 or newer;
 - pnpm;
-- optional Ollama for AI without a Gateway token.
+- optional Ollama for AI without a hosted provider token.
 
 ```bash
 git clone https://github.com/albertomx2/ariadne.git
@@ -349,8 +351,11 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 # Keep true for the fictional no-account fallback.
 NEXT_PUBLIC_DEMO_MODE=true
 
-# Vercel injects VERCEL_OIDC_TOKEN automatically.
-# This key is only needed for non-Vercel hosted development.
+# Server-only GitHub token with account-level Models: read permission.
+GITHUB_MODELS_TOKEN=github_pat_...
+GITHUB_MODELS_MODEL=openai/gpt-4.1-mini
+
+# Optional alternative hosted provider.
 AI_GATEWAY_API_KEY=
 AI_GATEWAY_MODEL=openai/gpt-5-mini
 
@@ -409,8 +414,9 @@ Recommended manual acceptance test:
 
 The public app deploys from `albertomx2/ariadne` to Vercel as a standard Next.js
 server application. Vercel preserves Auth callbacks, dynamic API routes, and AI
-Gateway OIDC. Production provides only the Supabase project URL and publishable
-key; no Supabase secret or service-role key is used.
+requests. Production provides only the Supabase project URL and publishable
+key to the browser; the GitHub Models token remains server-only, and no
+Supabase secret or service-role key is used.
 
 Required Vercel variables:
 
@@ -418,7 +424,8 @@ Required Vercel variables:
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 NEXT_PUBLIC_DEMO_MODE=true
-AI_GATEWAY_MODEL=openai/gpt-5-mini
+GITHUB_MODELS_TOKEN=github_pat_...
+GITHUB_MODELS_MODEL=openai/gpt-4.1-mini
 ```
 
 Do not add purchased AI credits or an automatic top-up. After changing
