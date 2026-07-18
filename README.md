@@ -299,7 +299,7 @@ lib/
   predictive-ranking.ts   Transparent AAC suggestion ranking
   schedule.ts             Time-aware schedule logic
   speech.ts               Immediate device TTS
-  supabase/               Browser, server, and proxy clients
+  supabase/               Browser and auth-callback server clients
 public/assets/aac/        Curated AAC photo assets
 supabase/migrations/      Multi-organization schema, RLS, and sync snapshot
 types/                    Domain types
@@ -369,6 +369,7 @@ tables remain the long-term domain model.
 pnpm typecheck
 pnpm lint
 pnpm exec next build --webpack
+pnpm build:cloudflare
 ```
 
 Recommended manual acceptance test:
@@ -387,11 +388,13 @@ Recommended manual acceptance test:
 
 ## Deployment
 
-The web app can be deployed as a Next.js server application. Production must
-provide the two public Supabase variables above. Local Ollama is not reachable
-from a serverless deployment unless a separately secured model endpoint is
-configured; the public hackathon site should therefore expose AI availability
-honestly and retain manual workflows.
+The web app deploys as a Next.js server application using the OpenNext
+Cloudflare adapter. `pnpm build:cloudflare` produces `.open-next/worker.js` and
+the corresponding static assets, preserving Auth callbacks, API routes, and
+server-rendered behavior. Production must provide the two public Supabase
+variables above. Local Ollama is not reachable from a serverless deployment
+unless a separately secured model endpoint is configured; the public hackathon
+site therefore exposes AI availability honestly and retains manual workflows.
 
 After changing production environment variables, save and deploy a new version
 so the build receives the new values.
