@@ -64,6 +64,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [hydrated, router, session, syncMode]);
 
+  if (!hydrated || session?.kind !== "educator" || syncMode !== "supabase") {
+    return (
+      <main className="auth-loading" aria-live="polite">
+        <Brand href="/sign-in" />
+        <p>Checking your Ariadne account…</p>
+      </main>
+    );
+  }
+
   return (
     <div className="app-shell">
       {mobileOpen ? (

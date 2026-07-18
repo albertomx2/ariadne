@@ -49,6 +49,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.auth-loading {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+}
+
+.auth-loading p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
 button,
 input,
 textarea,
