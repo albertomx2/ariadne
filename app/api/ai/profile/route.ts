@@ -6,7 +6,8 @@ import {
   type ProfileAssistantResponse,
   type ProfileDraft,
 } from "@/lib/ai-contracts";
-import { ollamaChat } from "@/lib/ollama";
+import { hasAiAccess } from "@/lib/ai-access";
+import { aiChat } from "@/lib/ai-provider";
 
 export const dynamic = "force-dynamic";
 
@@ -445,6 +446,15 @@ function buildAssistantReply(
 
 export async function POST(request: Request) {
   try {
+    if (!(await hasAiAccess())) {
+      return NextResponse.json(
+        {
+          error:
+            "Sign in with an Ariadne educator account to use hosted AI.",
+        },
+        { status: 401 },
+      );
+    }
     const body = (await request.json()) as {
       messages?: AiChatMessage[];
       draft?: ProfileDraft;
@@ -499,7 +509,7 @@ export async function POST(request: Request) {
         completeEnoughToReview: completeEnoughToReview(currentDraft),
       } satisfies ProfileAssistantResponse);
     }
-    const content = await ollamaChat({
+    const content = await aiChat({
       format: profileDraftSchema,
       messages: [
         {
@@ -654,7 +664,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "The local AI service could not respond.",
+            : "The AI service could not respond.",
       },
       { status: 503 },
     );

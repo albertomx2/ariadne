@@ -164,11 +164,13 @@ export default function CreatePage() {
       }
       setResult(payload);
       setAiState("ready");
-      showToast("Private AI draft created. Educator review is required.");
-    } catch {
+      showToast("AI draft created. Educator review is required.");
+    } catch (error) {
       setAiState("error");
       showToast(
-        "The local AI service could not create this draft. Check that Ollama is running, then try again.",
+        error instanceof Error
+          ? error.message
+          : "The AI service could not create this draft. Try again in a moment.",
       );
     }
   }
@@ -264,9 +266,9 @@ export default function CreatePage() {
   return (
     <div className="page create-page">
       <PageHeader
-        eyebrow="Private AI activity planner"
+        eyebrow="AI-assisted activity planner"
         title="Plan an accessible activity"
-        description="A local language model organizes your plan. Profile rules ground the draft, a professional reviews it, and publishing sends it to the shared schedule."
+        description="A language model organizes your plan. Profile rules ground the draft, a professional reviews it, and publishing sends it to the shared schedule."
       >
         <Link className="button button-secondary" href="/workspace/schedule">
           View schedule
@@ -393,8 +395,8 @@ export default function CreatePage() {
             <div className="copilot-boundary">
               <ShieldCheck size={18} />
               <p>
-                Qwen 2.5 runs through Ollama on this computer. Only the selected
-                classroom-access fields are used. AI creates a draft; it cannot
+                Only the selected classroom-access fields are sent to the
+                configured AI provider. AI creates an editable draft; it cannot
                 approve or publish support for a learner.
               </p>
             </div>
@@ -402,14 +404,14 @@ export default function CreatePage() {
               <div className="ai-build-progress" aria-live="polite">
                 <span>Ariadne is building an AAC-aware draft…</span>
                 <small>
-                  The activity and selected profile fields are being analyzed locally.
+                  The activity and selected profile fields are being analyzed.
                 </small>
               </div>
             ) : null}
             {aiState === "error" ? (
               <p className="field-error" role="alert">
-                The local model is unavailable. Your activity text is safe and
-                unchanged; start Ollama and try again.
+                The AI provider is unavailable. Your activity text is safe and
+                unchanged; wait a moment and try again.
               </p>
             ) : null}
             <button
@@ -419,7 +421,7 @@ export default function CreatePage() {
               type="button"
             >
               <Sparkles size={17} />
-              {result ? "Rebuild AI draft" : "Analyze with private AI"}
+              {result ? "Rebuild AI draft" : "Analyze with AI"}
             </button>
           </div>
         </section>
@@ -456,7 +458,7 @@ export default function CreatePage() {
           <div className="analysis-heading">
             <div>
               <p className="eyebrow">
-                Private AI draft
+                AI-generated draft
               </p>
               <h2>{result.title}</h2>
               <p>{result.summary}</p>

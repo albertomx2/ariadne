@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { vocabulary } from "@/lib/demo-data";
-import { ollamaChat } from "@/lib/ollama";
+import { hasAiAccess } from "@/lib/ai-access";
+import { aiChat } from "@/lib/ai-provider";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +126,15 @@ Rules:
 
 export async function POST(request: Request) {
   try {
+    if (!(await hasAiAccess())) {
+      return NextResponse.json(
+        {
+          error:
+            "Sign in with an Ariadne educator account to use hosted AI.",
+        },
+        { status: 401 },
+      );
+    }
     const body = (await request.json()) as {
       activity?: string;
       context?: string;
@@ -138,7 +148,7 @@ export async function POST(request: Request) {
       );
     }
     const activityText = body.activity.trim();
-    const content = await ollamaChat({
+    const content = await aiChat({
       format: activitySchema,
       messages: [
         { role: "system", content: ACTIVITY_SYSTEM },
@@ -167,7 +177,7 @@ export async function POST(request: Request) {
       !Array.isArray(result.supports) ||
       !Array.isArray(result.steps)
     ) {
-      throw new Error("The local model returned an invalid activity draft.");
+      throw new Error("The AI provider returned an invalid activity draft.");
     }
     const knownVocabulary = new Map(
       vocabulary.map((item) => [item.id.toLowerCase(), item.id]),
@@ -284,7 +294,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "The local AI service could not respond.",
+            : "The AI service could not respond.",
       },
       { status: 503 },
     );

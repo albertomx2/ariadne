@@ -61,6 +61,9 @@ export default function NewStudentPage() {
   const [assistantState, setAssistantState] = useState<
     "checking" | "ready" | "working" | "offline"
   >("checking");
+  const [assistantProvider, setAssistantProvider] = useState<
+    "vercel-ai-gateway" | "ollama" | null
+  >(null);
   const [completeEnough, setCompleteEnough] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [alias, setAlias] = useState("");
@@ -77,10 +80,16 @@ export default function NewStudentPage() {
   useEffect(() => {
     void fetch("/api/ai/health", { cache: "no-store" })
       .then((response) => {
-        if (!response.ok) throw new Error("Local model unavailable");
-        return response.json() as Promise<{ ready: boolean }>;
+        if (!response.ok) throw new Error("AI provider unavailable");
+        return response.json() as Promise<{
+          ready: boolean;
+          provider?: "vercel-ai-gateway" | "ollama";
+        }>;
       })
-      .then((result) => setAssistantState(result.ready ? "ready" : "offline"))
+      .then((result) => {
+        setAssistantProvider(result.provider ?? null);
+        setAssistantState(result.ready ? "ready" : "offline");
+      })
       .catch(() => setAssistantState("offline"));
   }, []);
 
@@ -129,13 +138,15 @@ export default function NewStudentPage() {
         { role: "assistant", content: result.reply },
       ]);
       setAssistantState("ready");
-    } catch {
+    } catch (error) {
       setMessages([
         ...nextMessages,
         {
           role: "assistant",
           content:
-            "I could not reach the private local model. Your message is still here; please try again in a moment.",
+            error instanceof Error
+              ? error.message
+              : "I could not reach the AI provider. Your message is still here; please try again in a moment.",
         },
       ]);
       setAssistantState("offline");
@@ -312,8 +323,10 @@ export default function NewStudentPage() {
               >
                 <ShieldCheck size={13} />
                 {assistantState === "offline"
-                  ? "Local model unavailable"
-                  : "Qwen 2.5 7B · local"}
+                  ? "AI provider unavailable"
+                  : assistantProvider === "ollama"
+                    ? "Qwen 2.5 7B · local"
+                    : "GPT-5 mini · Vercel AI"}
               </span>
             </header>
 

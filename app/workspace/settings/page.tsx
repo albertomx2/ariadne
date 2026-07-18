@@ -350,7 +350,9 @@ export default function SettingsPage() {
             {syncMode === "supabase"
               ? "This workspace is synchronized across signed-in devices. Database policies limit every read and write to authorized organization members."
               : "This demo stores fictional data only in this browser. Sign in with an Ariadne email account to synchronize devices."}{" "}
-            Learner data is not sent to the local AI provider.
+            AI workflows send only the profile fields selected for that draft
+            to the configured provider. Do not enter medical records or
+            unrelated personally identifiable information.
           </p>
         </div>
         <div className="modal-actions">

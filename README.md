@@ -169,17 +169,22 @@ allows an educator to select or upload a clearer photo for a word.
 
 ## AI design
 
-### Local models
+### Public and local providers
 
-The default local model is Qwen 2.5 7B through Ollama. Profile observations are
-not sent to a paid hosted LLM API.
+The public deployment uses GPT-5 mini through Vercel AI Gateway. Vercel
+authenticates server-side requests with its deployment OIDC token, so no AI key
+is exposed to the browser. The account remains on AI Gateway's free monthly
+credit and has no purchased credits or automatic paid top-up.
+
+Local development falls back to Qwen 2.5 7B through Ollama when neither
+`AI_GATEWAY_API_KEY` nor `VERCEL_OIDC_TOKEN` is present:
 
 ```bash
 ollama pull qwen2.5:7b
 ollama serve
 ```
 
-The application uses the local model for two bounded workflows:
+The application uses AI for two bounded workflows:
 
 1. **Guided profile interview**
    - understands a complete initial description or asks for missing context;
@@ -198,8 +203,11 @@ The application uses the local model for two bounded workflows:
    - selects activity-specific AAC vocabulary;
    - never publishes without educator review.
 
-All LLM output is treated as untrusted draft content and validated against
-structured contracts and deterministic AAC rules.
+All LLM output is treated as untrusted draft content, constrained with JSON
+Schema, and validated again against structured contracts and deterministic AAC
+rules. Hosted AI routes require an authenticated educator account. Only the
+selected classroom-access fields are sent; the UI explicitly warns educators
+not to enter medical records or unrelated personally identifiable information.
 
 ### Predictive AAC ranking
 
@@ -277,7 +285,8 @@ selection.
 - React 19
 - TypeScript 5
 - Supabase Auth, PostgreSQL, RLS, and Realtime
-- Ollama with Qwen 2.5 7B
+- Vercel AI Gateway with GPT-5 mini
+- Ollama with Qwen 2.5 7B as a local fallback
 - ARASAAC API
 - Web Speech synthesis
 - CSS-based responsive visual system
@@ -287,7 +296,7 @@ selection.
 
 ```text
 app/
-  api/ai/                 Local AI endpoints
+  api/ai/                 Authenticated, schema-constrained AI endpoints
   api/photos/             Curated photo adapter
   api/pictograms/         ARASAAC adapter
   auth/confirm/           Passwordless auth callback
@@ -296,9 +305,10 @@ app/
   workspace/              Teacher routes
 components/               Shared UI and AAC board editor
 lib/
+  ai-access.ts            Educator-session guard for hosted AI
   ai-contracts.ts         Structured AI response contracts
+  ai-provider.ts          Vercel AI Gateway / local Ollama adapter
   ariadne-store.tsx       Local/remote state and Realtime synchronization
-  ollama.ts               Local LLM adapter
   predictive-ranking.ts   Transparent AAC suggestion ranking
   schedule.ts             Time-aware schedule logic
   speech.ts               Immediate device TTS
@@ -317,7 +327,7 @@ Requirements:
 
 - Node.js 20 or newer;
 - pnpm;
-- optional Ollama for real local AI.
+- optional Ollama for AI without a Gateway token.
 
 ```bash
 git clone https://github.com/albertomx2/ariadne.git
@@ -339,7 +349,12 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 # Keep true for the fictional no-account fallback.
 NEXT_PUBLIC_DEMO_MODE=true
 
-# Optional local AI configuration
+# Vercel injects VERCEL_OIDC_TOKEN automatically.
+# This key is only needed for non-Vercel hosted development.
+AI_GATEWAY_API_KEY=
+AI_GATEWAY_MODEL=openai/gpt-5-mini
+
+# Optional local fallback
 OLLAMA_BASE_URL=http://127.0.0.1:11434
 OLLAMA_MODEL=qwen2.5:7b
 ```
@@ -392,16 +407,24 @@ Recommended manual acceptance test:
 
 ## Deployment
 
-The web app deploys as a Next.js server application using the OpenNext
-Cloudflare adapter. `pnpm build:cloudflare` produces `.open-next/worker.js` and
-the corresponding static assets, preserving Auth callbacks, API routes, and
-server-rendered behavior. Production must provide the two public Supabase
-variables above. Local Ollama is not reachable from a serverless deployment
-unless a separately secured model endpoint is configured; the public hackathon
-site therefore exposes AI availability honestly and retains manual workflows.
+The public app deploys from `albertomx2/ariadne` to Vercel as a standard Next.js
+server application. Vercel preserves Auth callbacks, dynamic API routes, and AI
+Gateway OIDC. Production provides only the Supabase project URL and publishable
+key; no Supabase secret or service-role key is used.
 
-After changing production environment variables, save and deploy a new version
-so the build receives the new values.
+Required Vercel variables:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+NEXT_PUBLIC_DEMO_MODE=true
+AI_GATEWAY_MODEL=openai/gpt-5-mini
+```
+
+Do not add purchased AI credits or an automatic top-up. After changing
+production environment variables, redeploy so the build receives the new
+values. The OpenNext Cloudflare build remains available as a secondary adapter,
+but it is not the canonical public deployment.
 
 ## U.S. privacy and accessibility checklist
 
