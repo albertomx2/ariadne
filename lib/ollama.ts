@@ -1,8 +1,11 @@
 import "server-only";
 
-const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://127.0.0.1:11434";
+const OLLAMA_URL =
+  process.env.OLLAMA_BASE_URL ??
+  process.env.OLLAMA_URL ??
+  "http://127.0.0.1:11434";
 export const OLLAMA_MODEL =
-  process.env.OLLAMA_MODEL ?? "qwen2.5:7b-instruct";
+  process.env.OLLAMA_MODEL ?? "qwen2.5:7b";
 
 export async function ollamaChat({
   messages,

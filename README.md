@@ -317,7 +317,7 @@ Requirements:
 - optional Ollama for real local AI.
 
 ```bash
-git clone https://github.com/ammendezuc3m/ariadne.git
+git clone https://github.com/albertomx2/ariadne.git
 cd ariadne
 pnpm install
 cp .env.example .env.local
