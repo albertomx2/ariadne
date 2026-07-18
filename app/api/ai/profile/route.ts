@@ -125,9 +125,12 @@ Structured field definitions:
 
 The structured draft must retain prior facts unless the educator explicitly
 corrects them. Empty strings mean unknown. "unknowns" contains short missing
-field labels, not questions. Set completeEnoughToReview true only when alias,
-current communication, yes/no or rejection, help, familiar representation, and
-at least one effective support are documented.`;
+field labels, not questions. Set completeEnoughToReview true only when every
+interview area is documented: alias, current communication, yes, no/rejection,
+help, break, finished/transition, receptive language, familiar representation,
+access method, effective supports, interests, home language, easier and harder
+contexts, and essential safety messages. An explicit observation that no
+reliable signal currently exists counts as documented; an empty field does not.`;
 
 function isStringArray(value: unknown): value is string[] {
   return (
@@ -277,10 +280,20 @@ function completeEnoughToReview(draft: ProfileDraft) {
   return Boolean(
     draft.alias &&
       draft.communicationModes.length &&
-      (draft.yesMethod || draft.noMethod) &&
+      draft.yesMethod &&
+      draft.noMethod &&
       draft.helpMethod &&
+      draft.breakMethod &&
+      draft.finishMethod &&
+      draft.receptiveLanguage &&
       draft.representation &&
-      draft.effectiveSupports.length,
+      draft.accessMethod &&
+      draft.effectiveSupports.length &&
+      draft.interests.length &&
+      draft.homeLanguage &&
+      draft.easierContexts.length &&
+      draft.harderContexts.length &&
+      draft.emergencyMessages.length,
   );
 }
 
