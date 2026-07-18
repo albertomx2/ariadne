@@ -108,15 +108,35 @@
   padding: 6px 10px;
 }
 
-.message-words > span:not(.message-placeholder) {
+.message-token {
+  display: grid;
+  min-width: 74px;
+  grid-template-rows: 52px auto;
+  place-items: center;
   flex: 0 0 auto;
-  padding: 8px 11px;
+  padding: 5px 9px;
   color: #1f3933;
   background: #e8f3ef;
   border: 1px solid #bcd9d2;
   border-radius: 9px;
-  font-size: 19px;
+  font-size: 14px;
   font-weight: 700;
+}
+
+.message-token-picture,
+.prediction-picture {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  overflow: hidden;
+}
+
+.message-token-picture img,
+.prediction-picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .message-placeholder {
@@ -174,7 +194,11 @@
 }
 
 .prediction-strip button {
+  display: grid;
+  min-width: 76px;
   min-height: 36px;
+  grid-template-columns: 42px auto;
+  align-items: center;
   padding: 6px 12px;
   color: #44467e;
   background: white;
@@ -183,6 +207,10 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.prediction-strip button strong {
+  font-size: 13px;
 }
 
 .prediction-strip small {
@@ -280,6 +308,55 @@
   color: #56635e;
   background: #eef0ed;
   border-radius: 8px;
+}
+
+.aac-categories .category-visual {
+  overflow: hidden;
+  background: white;
+}
+
+.category-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.visual-missing {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 42px;
+  place-items: center;
+  color: #65716c;
+  background: repeating-linear-gradient(
+    135deg,
+    #f2f3f0,
+    #f2f3f0 8px,
+    #e8ebe7 8px,
+    #e8ebe7 16px
+  );
+  border-radius: 8px;
+}
+
+.activity-unavailable {
+  grid-column: 1 / -1;
+  min-height: 280px;
+}
+
+.day-activity-visual {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  overflow: hidden;
+  background: white;
+  border-radius: 12px;
+}
+
+.day-activity-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .aac-categories button.active {
@@ -599,7 +676,7 @@
 .student-day-list article {
   display: grid;
   min-height: 86px;
-  grid-template-columns: 58px 1fr 54px;
+  grid-template-columns: 76px 58px 1fr 54px;
   align-items: center;
   gap: 13px;
   padding: 10px 14px;

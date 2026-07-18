@@ -10,7 +10,7 @@ const ATTRIBUTION =
 
 export class ArasaacProvider implements SymbolProvider {
   id = "arasaac";
-  displayName = "ARASAAC (demo)";
+  displayName = "ARASAAC";
 
   imageUrl(externalId: string, variant = "500") {
     return `https://static.arasaac.org/pictograms/${externalId}/${externalId}_${variant}.png`;

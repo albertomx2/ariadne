@@ -75,6 +75,50 @@ export default function InsightsPage() {
         width: Math.round((count / max) * 100),
       }));
   }, [filtered]);
+  const supportSummary = useMemo(() => {
+    const grouped = new Map<
+      string,
+      { uses: number; helpful: number; partial: number; students: Set<string> }
+    >();
+    filtered.forEach((observation) => {
+      const current = grouped.get(observation.support) ?? {
+        uses: 0,
+        helpful: 0,
+        partial: 0,
+        students: new Set<string>(),
+      };
+      current.uses += 1;
+      current.helpful += observation.helpfulness === "helpful" ? 1 : 0;
+      current.partial += observation.helpfulness === "partly-helpful" ? 1 : 0;
+      current.students.add(observation.studentId);
+      grouped.set(observation.support, current);
+    });
+    return [...grouped.entries()]
+      .map(([support, values]) => ({ support, ...values }))
+      .sort((left, right) => right.uses - left.uses);
+  }, [filtered]);
+  const studentCoverage = useMemo(
+    () =>
+      students.map((student) => {
+        const records = filtered.filter(
+          (observation) => observation.studentId === student.id,
+        );
+        const lastRecord = records
+          .slice()
+          .sort(
+            (left, right) =>
+              new Date(right.createdAt).getTime() -
+              new Date(left.createdAt).getTime(),
+          )[0];
+        return {
+          student,
+          count: records.length,
+          contexts: new Set(records.map((record) => record.context)).size,
+          lastRecord,
+        };
+      }),
+    [filtered, students],
+  );
 
   function observerLabel(role: (typeof draft)["observerRole"]) {
     return {
@@ -222,6 +266,63 @@ export default function InsightsPage() {
           </aside>
         )}
       </div>
+
+      <section className="insight-action-grid">
+        <article className="card support-summary">
+          <header>
+            <div>
+              <h2>Support evidence</h2>
+              <p>Which supports were recorded, for whom, and how they were rated.</p>
+            </div>
+          </header>
+          <div className="support-summary-table">
+            {supportSummary.map((item) => (
+              <div key={item.support}>
+                <strong>{item.support || "Support not named"}</strong>
+                <span>{item.uses} record{item.uses === 1 ? "" : "s"}</span>
+                <span>{item.students.size} learner{item.students.size === 1 ? "" : "s"}</span>
+                <span>
+                  {item.helpful} helpful · {item.partial} partly helpful
+                </span>
+              </div>
+            ))}
+            {!supportSummary.length ? (
+              <p className="muted small">Add an evidence record to compare supports.</p>
+            ) : null}
+          </div>
+        </article>
+
+        <article className="card coverage-summary">
+          <header>
+            <div>
+              <h2>Evidence coverage</h2>
+              <p>Highlights profiles that need a fresh classroom observation.</p>
+            </div>
+          </header>
+          {studentCoverage.map(({ student, count, contexts: contextCount, lastRecord }) => (
+            <div className="coverage-row" key={student.id}>
+              <span style={{ background: student.color }}>{student.initials}</span>
+              <div>
+                <strong>{student.firstName}</strong>
+                <small>
+                  {count
+                    ? `${count} records across ${contextCount} contexts`
+                    : `No records in the last ${period} days`}
+                </small>
+              </div>
+              <button
+                onClick={() => {
+                  setDraft((current) => ({ ...current, studentId: student.id }));
+                  setAddOpen(true);
+                }}
+                type="button"
+              >
+                {lastRecord ? "Add follow-up" : "Add first record"}
+              </button>
+            </div>
+          ))}
+        </article>
+      </section>
 
       <section className="recent-observations">
         <div className="section-heading">

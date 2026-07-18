@@ -6,11 +6,13 @@ import {
   Check,
   ChevronLeft,
   CircleHelp,
+  Clock3,
   Delete,
   Grid2X2,
   Hand,
   Headphones,
   Home,
+  ImageIcon,
   ListChecks,
   MessageSquareText,
   RotateCcw,
@@ -21,6 +23,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   type CSSProperties,
   useEffect,
@@ -37,6 +40,7 @@ import {
 import { rankFringeVocabulary, stableCore } from "@/lib/predictive-ranking";
 import {
   activitiesForStudent,
+  activeActivity,
   activeOrNextActivity,
   formatDay,
   formatTime,
@@ -133,13 +137,7 @@ function AacVisual({
   size?: number;
 }) {
   const familiarPhoto = photoFor(item, student);
-  if (item.visualType === "text") {
-    return <strong aria-hidden="true">{item.label}</strong>;
-  }
-  const shouldUsePhoto =
-    item.visualType === "photo" ||
-    (representationUsesPhotos(student.representation) &&
-      item.visualType !== "symbol");
+  const shouldUsePhoto = representationUsesPhotos(student.representation);
   if (shouldUsePhoto) {
     if (familiarPhoto) {
       return (
@@ -165,15 +163,9 @@ function AacVisual({
       );
     }
     return (
-      <Image
-        alt=""
-        className="familiar-photo"
-        height={size}
-        priority={item.id === "apple" || item.id === "banana"}
-        src={`/api/photos/first?q=${encodeURIComponent(item.label)}`}
-        unoptimized
-        width={size}
-      />
+      <span className="visual-missing" aria-label={`Photo needed for ${item.label}`}>
+        <ImageIcon aria-hidden="true" size={Math.max(24, size / 3)} />
+      </span>
     );
   }
   if (item.arasaacId) {
@@ -187,7 +179,11 @@ function AacVisual({
       />
     );
   }
-  return <strong aria-hidden="true">{item.label}</strong>;
+  return (
+    <span className="visual-missing" aria-label={`Pictogram unavailable for ${item.label}`}>
+      <Grid2X2 aria-hidden="true" size={Math.max(24, size / 3)} />
+    </span>
+  );
 }
 
 function AacCell({
@@ -201,10 +197,7 @@ function AacCell({
   predicted?: boolean;
   student: StudentProfile;
 }) {
-  const usesPhoto =
-    item.visualType === "photo" ||
-    (representationUsesPhotos(student.representation) &&
-      item.visualType !== "symbol");
+  const usesPhoto = representationUsesPhotos(student.representation);
   return (
     <button
       aria-label={item.label}
@@ -253,7 +246,10 @@ export default function StudentSpacePage() {
     syncMode,
     setActiveStudent,
     showToast,
+    hydrated,
+    session,
   } = useAriadne();
+  const router = useRouter();
   const student =
     students.find((item) => item.id === activeStudentId) ?? students[0];
   const [tab, setTab] = useState<StudentTab>("talk");
@@ -313,6 +309,10 @@ export default function StudentSpacePage() {
   }, [activeStudentId, setActiveStudent, students]);
 
   useEffect(() => {
+    if (hydrated && !session) router.replace("/sign-in");
+  }, [hydrated, router, session]);
+
+  useEffect(() => {
     const query = new URLSearchParams(window.location.search);
     if (query.get("at")) return;
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -333,6 +333,9 @@ export default function StudentSpacePage() {
   );
 
   const currentActivity = student
+    ? activeActivity(activities, student, now)
+    : undefined;
+  const nextActivity = student
     ? activeOrNextActivity(activities, student, now)
     : undefined;
   const currentActivityKey = currentActivity?.activityKey ?? "classroom";
@@ -468,12 +471,19 @@ export default function StudentSpacePage() {
         </div>
         <div className="current-activity">
           <span>
-            {currentActivity &&
-            timingForActivity(currentActivity, now) === "now"
+            {currentActivity
               ? "Happening now"
-              : "Next activity"}
+              : nextActivity &&
+                  timingForActivity(nextActivity, now) !== "finished"
+                ? "Next activity"
+                : "Schedule"}
           </span>
-          <strong>{currentActivity?.title ?? "No activity scheduled"}</strong>
+          <strong>
+            {currentActivity?.title ??
+              (nextActivity && timingForActivity(nextActivity, now) !== "finished"
+                ? nextActivity.title
+                : "No activity now")}
+          </strong>
         </div>
         <Link className="student-exit" href="/workspace">
           <ArrowLeft size={18} /> Teacher workspace
@@ -487,7 +497,14 @@ export default function StudentSpacePage() {
               <div className="message-words" aria-live="polite">
                 {message.length ? (
                   message.map((item, index) => (
-                    <span key={`${item.id}-${index}`}>{item.label}</span>
+                    <span className="message-token" key={`${item.id}-${index}`}>
+                      <span className="message-token-picture">
+                        <AacVisual item={item} size={54} student={student} />
+                      </span>
+                      {representationShowsText(student.representation) ? (
+                        <strong>{item.label}</strong>
+                      ) : null}
+                    </span>
                   ))
                 ) : (
                   <span className="message-placeholder">
@@ -539,7 +556,12 @@ export default function StudentSpacePage() {
                     onClick={() => selectWord(item)}
                     type="button"
                   >
-                    {item.label}
+                    <span className="prediction-picture">
+                      <AacVisual item={item} size={42} student={student} />
+                    </span>
+                    {representationShowsText(student.representation) ? (
+                      <strong>{item.label}</strong>
+                    ) : null}
                   </button>
                 ))}
                 <small>Suggestions never speak for you</small>
@@ -550,7 +572,7 @@ export default function StudentSpacePage() {
               <section className="activity-board-heading">
                 <div>
                   <p className="eyebrow">Activity communication</p>
-                  <h1>{currentActivity?.title ?? "Classroom activity"}</h1>
+                  <h1>{currentActivity?.title ?? "No activity right now"}</h1>
                   <p>
                     This page follows the shared schedule. Talk keeps the full
                     vocabulary; Activity shows words for what is happening now.
@@ -578,13 +600,37 @@ export default function StudentSpacePage() {
                       onClick={() => setTalkCategory(id)}
                       type="button"
                     >
-                      <span>{label.slice(0, 1)}</span>
+                      <span className="category-visual">
+                        {studentVocabulary.find(
+                          (item) => (item.customCategory ?? item.category) === id,
+                        ) ? (
+                          <AacVisual
+                            item={studentVocabulary.find(
+                              (item) => (item.customCategory ?? item.category) === id,
+                            )!}
+                            size={30}
+                            student={student}
+                          />
+                        ) : (
+                          <Grid2X2 size={20} />
+                        )}
+                      </span>
                       {label}
                     </button>
                   ))}
                 </aside>
               ) : null}
 
+              {tab === "activity" && !currentActivity ? (
+                <div className="student-day-empty activity-unavailable">
+                  <Clock3 size={40} />
+                  <strong>There is no activity happening now.</strong>
+                  <span>
+                    Activity words appear automatically between the scheduled
+                    start and end time.
+                  </span>
+                </div>
+              ) : (
               <section
                 className="aac-grid"
                 aria-label={
@@ -607,6 +653,7 @@ export default function StudentSpacePage() {
                   />
                 ))}
               </section>
+              )}
             </div>
           </>
         ) : null}
@@ -627,32 +674,49 @@ export default function StudentSpacePage() {
               </p>
             </header>
             <div className="student-day-list">
-              {timedActivities.map(({ activity, timing }) => (
-                <article className={timing} key={activity.id}>
-                  <time>{formatTime(activity.time)}</time>
-                  <div>
-                    <strong>{activity.title}</strong>
-                    <span>
-                      {timing === "finished"
-                        ? "Finished"
-                        : timing === "now"
-                          ? "Now"
-                          : timing === "next"
-                            ? "Next"
-                            : "Later"}{" "}
-                      · {activity.location}
+              {timedActivities.map(({ activity, timing }) => {
+                const activityVisual = vocabularyForActivity(
+                  activity,
+                  studentVocabulary,
+                )[0];
+                return (
+                  <article className={timing} key={activity.id}>
+                    <span className="day-activity-visual">
+                      {activityVisual ? (
+                        <AacVisual
+                          item={activityVisual}
+                          size={70}
+                          student={student}
+                        />
+                      ) : (
+                        <CalendarDays size={34} />
+                      )}
                     </span>
-                  </div>
-                  <button
-                    aria-label={`Speak ${activity.title}`}
-                    disabled={!student.speechEnabled}
-                    onClick={() => speak(activity.title)}
-                    type="button"
-                  >
-                    <Volume2 size={22} />
-                  </button>
-                </article>
-              ))}
+                    <time>{formatTime(activity.time)}</time>
+                    <div>
+                      <strong>{activity.title}</strong>
+                      <span>
+                        {timing === "finished"
+                          ? "Finished"
+                          : timing === "now"
+                            ? "Now"
+                            : timing === "next"
+                              ? "Next"
+                              : "Later"}{" "}
+                        · {activity.location}
+                      </span>
+                    </div>
+                    <button
+                      aria-label={`Speak ${activity.title}`}
+                      disabled={!student.speechEnabled}
+                      onClick={() => speak(activity.title)}
+                      type="button"
+                    >
+                      <Volume2 size={22} />
+                    </button>
+                  </article>
+                );
+              })}
               {!timedActivities.length ? (
                 <div className="student-day-empty">
                   <CalendarDays size={32} />
@@ -792,8 +856,16 @@ export default function StudentSpacePage() {
             ) : (
               <div className="student-day-empty">
                 <ListChecks size={34} />
-                <strong>No steps were added for this activity.</strong>
-                <span>The teacher can edit the shared activity.</span>
+                <strong>
+                  {currentActivity
+                    ? "No steps were added for this activity."
+                    : "There is no activity happening now."}
+                </strong>
+                <span>
+                  {currentActivity
+                    ? "The teacher can edit the shared activity."
+                    : "Steps appear automatically during the scheduled activity time."}
+                </span>
               </div>
             )}
           </section>

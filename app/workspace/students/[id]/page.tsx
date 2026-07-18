@@ -157,7 +157,7 @@ export default function StudentProfilePage() {
         <div>
           <span>Symbol system</span>
           <strong>
-            {student.symbolProvider === "arasaac" ? "ARASAAC demo" : "Custom"}
+            {student.symbolProvider === "arasaac" ? "ARASAAC" : "Custom photos"}
           </strong>
         </div>
       </div>
@@ -926,13 +926,13 @@ export default function StudentProfilePage() {
       </Modal>
 
       <Modal
-        description="This removes the fictional profile from this browser."
+        description="This permanently removes the learner profile from the synchronized workspace."
         onClose={() => setConfirmDelete(false)}
         open={confirmDelete}
         size="small"
         title={`Delete ${student.firstName}'s profile?`}
       >
-        <p>This action cannot be undone unless you reset the demo data.</p>
+        <p>This action cannot be undone.</p>
         <div className="modal-actions">
           <button
             className="button button-secondary"

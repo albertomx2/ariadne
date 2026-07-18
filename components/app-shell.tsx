@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAriadne } from "@/lib/ariadne-store";
 import { Brand } from "./brand";
 
@@ -44,6 +44,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     showToast,
     syncMode,
     accountEmail,
+    hydrated,
+    session,
   } = useAriadne();
   const initials = settings.educatorName
     .split(/\s+/)
@@ -51,6 +53,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const timer = window.setTimeout(() => {
+      if (session?.kind !== "educator" || syncMode !== "supabase") {
+        router.replace("/sign-in");
+      }
+    }, 1800);
+    return () => window.clearTimeout(timer);
+  }, [hydrated, router, session, syncMode]);
 
   return (
     <div className="app-shell">
@@ -118,11 +130,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="sidebar-note">
           <strong>
-            <Sparkles size={15} aria-hidden="true" /> Build Week demo
+            <Sparkles size={15} aria-hidden="true" /> Learner access
           </strong>
-          <p>All learner data in this workspace is fictional.</p>
-          <Link className="button button-secondary small" href="/student">
-            Preview student space
+          <p>Select a learner before opening their personalized space.</p>
+          <Link className="button button-secondary small" href="/workspace/students">
+            Choose a learner
           </Link>
         </div>
       </aside>
@@ -147,8 +159,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="topbar-right">
-            <Link className="button button-secondary" href="/student">
-              Preview as student
+            <Link className="button button-secondary" href="/workspace/students">
+              Open student space
             </Link>
             <button
               aria-expanded={notificationsOpen}
@@ -216,9 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <section className="topbar-popover account-popover">
                 <strong>{settings.educatorName}</strong>
                 <span>
-                  {syncMode === "supabase"
-                    ? accountEmail
-                    : `Demo teacher · ${settings.schoolName}`}
+                  {accountEmail ?? settings.schoolName}
                 </span>
                 <Link
                   href="/workspace/settings"

@@ -7,12 +7,12 @@ with complex communication and access needs. It connects the learner's
 functional profile, the demands of a real classroom activity, and the
 educator-reviewed supports that make participation possible.
 
-This repository contains the complete web prototype. The interface, source
-code, code comments, sample content, terminology, dates, and product assumptions
-use American English. The included learner records are fictional.
+This repository contains the complete responsive web application. The
+interface, source code, code comments, terminology, dates, and product
+assumptions use American English. New accounts start with an empty workspace.
 
 - Source: <https://github.com/albertomx2/ariadne>
-- Public Vercel demo: <https://ariadne-opal.vercel.app>
+- Public Vercel application: <https://ariadne-opal.vercel.app>
 
 ## What Ariadne is
 
@@ -113,9 +113,9 @@ through Supabase Auth:
 7. Supabase Realtime broadcasts the update to other signed-in devices.
 8. Every device renders the same schedule, profiles, boards, and materials.
 
-The app still supports a clearly labeled fictional browser demo when Supabase is
-not configured. In that mode, `localStorage`, `BroadcastChannel`, and storage
-events synchronize tabs in the same browser only.
+Educator routes require a synchronized Supabase account. Browser storage and
+`BroadcastChannel` provide a responsive local cache between remote snapshot
+updates; they are not a no-account educator mode.
 
 Email confirmation is disabled only to keep the zero-cost public hackathon demo
 usable without a custom SMTP provider. A production education deployment should
@@ -136,16 +136,16 @@ real learner information.
   function.
 - Educator membership remains role-scoped.
 - A student profile is not an authentication account.
-- Student class-code, QR, visual-PIN, and trusted-device flows are prototype
-  interfaces; a school pilot must issue hashed, expiring, revocable,
-  learner-specific server sessions.
+- Student access uses a class code followed by an explicit learner picker.
+  QR and simulated visual-PIN entry points are not exposed.
 
 ## AAC and visual representation
 
 ### ARASAAC
 
-The non-commercial hackathon demo uses the ARASAAC API through a provider
-adapter. Pictograms remain replaceable per learner and per activity.
+The non-commercial build uses the ARASAAC API through a provider adapter.
+Every board word stores an ARASAAC pictogram and can additionally store one
+educator-selected photo; the learner preference decides which is rendered.
 
 Required attribution:
 
@@ -159,7 +159,7 @@ provider such as PCS or SymbolStix.
 ### Photos
 
 There is no universal standardized photo library for AAC. Ariadne therefore
-uses a small, locally served, curated educational photo set for the demo and
+uses a small, locally served, curated educational photo set and
 allows an educator to select or upload a clearer photo for a word.
 
 - Photos render with preserved aspect ratio and `object-fit: contain`.
@@ -294,13 +294,13 @@ selection.
 - React 19
 - TypeScript 5
 - Supabase Auth, PostgreSQL, RLS, and Realtime
-- GitHub Models with GPT-4.1 mini for the public hackathon demo
+- GitHub Models with GPT-4.1 mini for the public hackathon deployment
 - optional Vercel AI Gateway adapter
 - Ollama with Qwen 2.5 7B as a local fallback
 - ARASAAC API
 - Web Speech synthesis
 - CSS-based responsive visual system
-- `localStorage` and `BroadcastChannel` demo fallback
+- `localStorage` and `BroadcastChannel` responsive local cache
 
 ## Repository structure
 
@@ -355,9 +355,6 @@ Open [http://localhost:3000/sign-in](http://localhost:3000/sign-in).
 # Browser-safe Supabase values
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-
-# Keep true for the fictional no-account fallback.
-NEXT_PUBLIC_DEMO_MODE=true
 
 # Server-only GitHub token with account-level Models: read permission.
 GITHUB_MODELS_TOKEN=github_pat_...
@@ -483,4 +480,5 @@ The application code is a hackathon prototype. Review third-party licenses,
 photo permissions, school contracts, and ARASAAC's CC BY-NC-SA terms before any
 commercial use.
 
-The public demo must contain fictional data only.
+Do not enter real learner data until the deploying school has completed its
+privacy, security, consent, retention, and vendor review.

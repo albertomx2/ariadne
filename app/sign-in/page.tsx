@@ -3,15 +3,11 @@
 import {
   ArrowRight,
   BadgeCheck,
-  Building2,
-  KeyRound,
   LockKeyhole,
   Mail,
-  QrCode,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Brand } from "@/components/brand";
@@ -28,10 +24,9 @@ export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [classCode, setClassCode] = useState("");
-  const [visualPin, setVisualPin] = useState("");
   const [authPending, setAuthPending] = useState(false);
   const [dialog, setDialog] = useState<
-    null | "qr" | "pin" | "trusted" | "student-picker"
+    null | "student-picker"
   >(null);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -55,7 +50,7 @@ export default function SignInPage() {
 
   function submitClassCode() {
     if (classCode.replace(/\s/g, "") !== settings.classCode) {
-      setError(`Use the fictional demo code ${settings.classCode}.`);
+      setError("That class code is not valid.");
       return;
     }
     setError("");
@@ -133,7 +128,7 @@ export default function SignInPage() {
                 <p className="muted">
                   {accountAction === "sign-in"
                     ? "Sign in to keep your classroom synchronized across devices."
-                    : "Create a free educator account for this hackathon demo."}
+                    : "Create a free educator account and synchronized workspace."}
                 </p>
               </div>
 
@@ -275,20 +270,6 @@ export default function SignInPage() {
 
               {error ? <p className="signin-error">{error}</p> : null}
 
-              <Link
-                className="demo-link"
-                href="/workspace"
-                onClick={() =>
-                  signIn({
-                    kind: "educator",
-                    name: settings.educatorName,
-                    provider: "fictional demo",
-                  })
-                }
-              >
-                Open the fictional demo workspace <ArrowRight size={15} />
-              </Link>
-
               <p className="signin-legal">
                 The same educator account works across devices. Google and
                 Microsoft sign-in are intentionally not enabled yet.
@@ -332,24 +313,9 @@ export default function SignInPage() {
 
               {error ? <p className="signin-error">{error}</p> : null}
 
-              <div className="access-options">
-                <button onClick={() => setDialog("qr")} type="button">
-                  <QrCode size={19} />
-                  Scan QR code
-                </button>
-                <button onClick={() => setDialog("pin")} type="button">
-                  <KeyRound size={19} />
-                  Use visual PIN
-                </button>
-                <button onClick={() => setDialog("trusted")} type="button">
-                  <Building2 size={19} />
-                  Trusted device
-                </button>
-              </div>
-
               <p className="signin-legal">
-                Access is limited to one learner space and expires
-                automatically.
+                The class code opens a learner picker so each student enters
+                only their personalized space.
               </p>
             </div>
           )}
@@ -357,7 +323,7 @@ export default function SignInPage() {
       </section>
 
       <Modal
-        description="Choose the learner space authorized by this fictional classroom code."
+        description="Choose the learner space authorized by this classroom code."
         onClose={() => setDialog(null)}
         open={dialog === "student-picker"}
         size="small"
@@ -377,98 +343,15 @@ export default function SignInPage() {
               <ArrowRight size={16} />
             </button>
           ))}
+          {!students.length ? (
+            <p className="muted small">
+              No learner profiles are available in this workspace yet. Ask an
+              educator to create one first.
+            </p>
+          ) : null}
         </div>
       </Modal>
 
-      <Modal
-        description="The QR encodes the fictional Room 14 access grant."
-        onClose={() => setDialog(null)}
-        open={dialog === "qr"}
-        size="small"
-        title="Scan classroom QR"
-      >
-        <div className="qr-demo" aria-label="Fictional QR code">
-          {Array.from({ length: 81 }, (_, index) => (
-            <i
-              className={(index * 7 + index % 5) % 3 ? "" : "filled"}
-              key={index}
-            />
-          ))}
-        </div>
-        <p className="muted small auth-centered">
-          In production, a camera scan creates a short-lived learner-specific
-          access grant.
-        </p>
-        <button
-          className="button button-primary auth-full"
-          onClick={() => enterStudent("maya", "QR code")}
-          type="button"
-        >
-          Simulate successful scan
-        </button>
-      </Modal>
-
-      <Modal
-        description="Use the fictional four-digit visual PIN 1428."
-        onClose={() => setDialog(null)}
-        open={dialog === "pin"}
-        size="small"
-        title="Visual PIN"
-      >
-        <div className="field">
-          <label htmlFor="visual-pin">Visual PIN</label>
-          <input
-            className="input visual-pin-input"
-            id="visual-pin"
-            inputMode="numeric"
-            maxLength={4}
-            onChange={(event) =>
-              setVisualPin(event.target.value.replace(/\D/g, ""))
-            }
-            placeholder="••••"
-            value={visualPin}
-          />
-        </div>
-        <div className="modal-actions">
-          <button
-            className="button button-primary"
-            onClick={() => {
-              if (visualPin !== "1428") {
-                showToast("The fictional visual PIN is 1428.");
-                return;
-              }
-              enterStudent("maya", "visual PIN");
-            }}
-            type="button"
-          >
-            Continue
-          </button>
-        </div>
-      </Modal>
-
-      <Modal
-        description="Choose the learner profile assigned to this fictional classroom device."
-        onClose={() => setDialog(null)}
-        open={dialog === "trusted"}
-        size="small"
-        title="Trusted classroom device"
-      >
-        <div className="trusted-student-list">
-          {students.map((student) => (
-            <button
-              key={student.id}
-              onClick={() => enterStudent(student.id, "trusted device")}
-              type="button"
-            >
-              <span style={{ background: student.color }}>
-                {student.initials}
-              </span>
-              <strong>{student.firstName}</strong>
-              <ArrowRight size={16} />
-            </button>
-          ))}
-        </div>
-      </Modal>
     </main>
   );
 }

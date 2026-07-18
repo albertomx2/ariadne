@@ -372,3 +372,17 @@
     grid-column: 2;
   }
 }
+.activity-row.now {
+  background: #e3f1ed;
+  box-shadow: inset 4px 0 #287265;
+}
+
+.happening-now-badge {
+  padding: 7px 10px;
+  color: #145f52;
+  background: #cce8e1;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}

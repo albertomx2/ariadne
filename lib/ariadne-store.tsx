@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { materials, students, vocabulary } from "@/lib/demo-data";
+import { students, vocabulary } from "@/lib/demo-data";
 import type {
   Activity,
   Material,
@@ -416,12 +416,6 @@ const initialStudents: StudentProfile[] = students.map((student) => {
   };
 });
 
-const initialMaterials: AriadneMaterial[] = materials.map((material) => ({
-  ...material,
-  archived: false,
-  description: `${material.type} prepared for ${material.student}.`,
-}));
-
 const fruitSaladSteps: ActivityStep[] = [
   { id: "choose-fruit", label: "Choose the fruit.", vocabularyIds: ["choose", "fruit"] },
   { id: "cut-banana", label: "Cut the banana.", vocabularyIds: ["cut", "banana"] },
@@ -572,65 +566,29 @@ const initialActivities: AriadneActivity[] = [
 ];
 
 const initialState: AriadneState = {
-  students: initialStudents,
-  materials: initialMaterials,
-  activities: initialActivities,
-  observations: [
-    {
-      id: "obs-transition",
-      studentId: "maya",
-      context: "Transition to lunch",
-      note: "The change card and two-minute countdown were available.",
-      support: "Change card",
-      helpfulness: "helpful",
-      observerRole: "classroom-teacher",
-      evidenceType: "direct-observation",
-      createdAt: "2026-07-18T12:24:00.000Z",
-    },
-    {
-      id: "obs-science",
-      studentId: "leo",
-      context: "Science group",
-      note: "Visible turn cards were used by all group members.",
-      support: "Turn-taking cards",
-      helpfulness: "helpful",
-      observerRole: "paraprofessional",
-      evidenceType: "direct-observation",
-      createdAt: "2026-07-17T10:20:00.000Z",
-    },
-  ],
-  activeStudentId: "maya",
+  students: [],
+  materials: [],
+  activities: [],
+  observations: [],
+  activeStudentId: "",
   notificationsRead: false,
   settings: {
-    schoolName: "Oakwood Elementary",
-    className: "Room 14",
+    schoolName: "Your school",
+    className: "Classroom",
     grade: "Grade 3",
-    educatorName: "Jordan Rivera",
+    educatorName: "Educator",
     retentionDays: 365,
     classCode: "142857",
     trustedDevices: true,
     visualPin: true,
     qrAccess: true,
-    members: [
-      {
-        id: "member-jordan",
-        name: "Jordan Rivera",
-        role: "Teacher",
-        email: "jordan@oakwood.edu",
-      },
-      {
-        id: "member-sam",
-        name: "Sam Chen",
-        role: "Speech-language pathologist",
-        email: "sam@oakwood.edu",
-      },
-    ],
+    members: [],
   },
   session: null,
 };
 
-const STORAGE_KEY = "ariadne-demo-state-v2";
-const SYNC_CHANNEL = "ariadne-demo-sync-v3";
+const STORAGE_KEY = "ariadne-workspace-state-v1";
+const SYNC_CHANNEL = "ariadne-workspace-sync-v1";
 
 function nextId(prefix: string) {
   const suffix =
@@ -690,11 +648,7 @@ function normalizeState(saved?: Partial<AriadneState>): AriadneState {
       steps: activity.steps ?? seeded?.steps ?? [],
     };
   });
-  const activityIds = new Set(normalizedSavedActivities.map((item) => item.id));
-  const mergedActivities = [
-    ...normalizedSavedActivities,
-    ...initialActivities.filter((item) => !activityIds.has(item.id)),
-  ];
+  const mergedActivities = normalizedSavedActivities;
   const normalizedObservations = (
     saved?.observations ?? initialState.observations
   ).map((observation) => ({

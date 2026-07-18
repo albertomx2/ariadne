@@ -37,6 +37,11 @@ export default function DashboardPage() {
     (material) => material.status === "review",
   ).length;
   const today = localDateKey();
+  const todayLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(new Date());
   const todayActivities = activities
     .filter((activity) => activity.date === today)
     .sort(
@@ -47,11 +52,14 @@ export default function DashboardPage() {
   const nextActivity =
     todayActivities.find((activity) => timingForActivity(activity) !== "finished") ??
     todayActivities.at(-1);
+  const happeningNow = todayActivities.find(
+    (activity) => timingForActivity(activity) === "now",
+  );
 
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Friday, July 18"
+        eyebrow={todayLabel}
         title={`Good morning, ${settings.educatorName.split(" ")[0]}`}
         description="Here’s what your classroom needs for a more accessible day."
       >
@@ -69,8 +77,10 @@ export default function DashboardPage() {
             <span>Today&apos;s schedule</span>
             <strong>{todayActivities.length} activities</strong>
             <small>
-              {nextActivity
-                ? `Next at ${formatTime(nextActivity.time)}`
+              {happeningNow
+                ? `${happeningNow.title} is happening now`
+                : nextActivity
+                  ? `Next at ${formatTime(nextActivity.time)}`
                 : "No activities scheduled"}
             </small>
           </div>
@@ -131,8 +141,10 @@ export default function DashboardPage() {
             <Link href="/workspace/schedule">View schedule</Link>
           </div>
           <div className="activity-list card">
-            {todayActivities.map((activity) => (
-              <article className="activity-row" key={activity.id}>
+            {todayActivities.map((activity) => {
+              const timing = timingForActivity(activity);
+              return (
+              <article className={`activity-row ${timing}`} key={activity.id}>
                 <time>{formatTime(activity.time)}</time>
                 <div className="activity-details">
                   <strong>{activity.title}</strong>
@@ -140,7 +152,11 @@ export default function DashboardPage() {
                     {activity.students.join(", ")} · {activity.context}
                   </span>
                 </div>
+                {timing === "now" ? (
+                  <span className="happening-now-badge">Happening now</span>
+                ) : (
                 <StatusPill status={activity.status} />
+                )}
                 {activity.status === "needs-supports" ? (
                   <Link
                     aria-label={`Prepare supports for ${activity.title}`}
@@ -155,7 +171,8 @@ export default function DashboardPage() {
                   </span>
                 )}
               </article>
-            ))}
+              );
+            })}
             {!todayActivities.length ? (
               <p className="empty-state">
                 No classroom activities are scheduled for today.

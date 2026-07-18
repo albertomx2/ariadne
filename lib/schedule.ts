@@ -105,6 +105,16 @@ export function activeOrNextActivity(
   );
 }
 
+export function activeActivity(
+  activities: AriadneActivity[],
+  student: StudentProfile,
+  now = new Date(),
+) {
+  return activitiesForStudent(activities, student, localDateKey(now)).find(
+    (activity) => timingForActivity(activity, now) === "now",
+  );
+}
+
 const activityVocabulary: Record<string, string[]> = {
   "fruit-salad": [
     "cut",

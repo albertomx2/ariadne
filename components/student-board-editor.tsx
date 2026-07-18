@@ -129,7 +129,7 @@ export function StudentBoardEditor({
   }
 
   function saveItem() {
-    if (!draft.label.trim()) return;
+    if (!draft.label.trim() || !draft.arasaacId) return;
     const existing = draft.id
       ? student.boardItems.find((item) => item.id === draft.id)
       : undefined;
@@ -153,7 +153,7 @@ export function StudentBoardEditor({
             .filter((item) => item.categoryId === draft.categoryId)
             .map((item) => item.order),
         ) + 1,
-      visualType: draft.visualType,
+      visualType: "inherit",
       arasaacId: draft.arasaacId,
       photoUrl: draft.photoUrl,
       photoSourceUrl: draft.photoSourceUrl,
@@ -188,6 +188,15 @@ export function StudentBoardEditor({
         throw new Error(payload.error || "Visual search is unavailable.");
       }
       setResults(payload.results ?? []);
+      if (source === "arasaac" && payload.results?.[0]?.arasaacId) {
+        const match = payload.results[0];
+        setDraft((current) => ({
+          ...current,
+          label: current.label || match.label || query,
+          arasaacId: match.arasaacId,
+          attribution: "Sergio Palao · ARASAAC · CC BY-NC-SA",
+        }));
+      }
       if (!payload.results?.length) {
         setSearchError(
           source === "photos"
@@ -430,7 +439,7 @@ export function StudentBoardEditor({
       </Modal>
 
       <Modal
-        description="Use a familiar photo for concrete words or a stable AAC symbol for abstract language."
+        description="Every word stores one ARASAAC pictogram and may also store a selected photo. The learner profile decides which one is shown."
         onClose={() => setItemOpen(false)}
         open={itemOpen}
         size="large"
@@ -501,8 +510,6 @@ export function StudentBoardEditor({
                     setDraft({
                       ...draft,
                       photoUrl: String(reader.result),
-                      arasaacId: undefined,
-                      visualType: "photo",
                       attribution: "Educator-provided familiar photo",
                     });
                   reader.readAsDataURL(file);
@@ -544,9 +551,10 @@ export function StudentBoardEditor({
                       setDraft({
                         ...draft,
                         label: draft.label || result.label || query,
-                        visualType: source === "photos" ? "photo" : "symbol",
-                        arasaacId: result.arasaacId,
-                        photoUrl: source === "photos" ? result.imageUrl : undefined,
+                        visualType: "inherit",
+                        arasaacId: result.arasaacId ?? draft.arasaacId,
+                        photoUrl:
+                          source === "photos" ? result.imageUrl : draft.photoUrl,
                         photoSourceUrl: result.sourceUrl,
                         attribution:
                           source === "photos"
@@ -577,22 +585,30 @@ export function StudentBoardEditor({
             </>
           )}
 
-          {draft.photoUrl || draft.arasaacId ? (
-            <div className="selected-visual">
-              <span>Selected visual</span>
+          <div className="selected-visual">
+            <span>Saved visual pair</span>
+            {draft.arasaacId ? (
               <Image
-                alt=""
+                alt="Selected ARASAAC pictogram"
                 height={100}
-                src={
-                  draft.photoUrl ??
-                  `https://static.arasaac.org/pictograms/${draft.arasaacId}/${draft.arasaacId}_500.png`
-                }
-                unoptimized={Boolean(draft.photoUrl)}
+                src={`https://static.arasaac.org/pictograms/${draft.arasaacId}/${draft.arasaacId}_500.png`}
                 width={100}
               />
-              <small>{draft.attribution}</small>
-            </div>
-          ) : null}
+            ) : (
+              <strong>Search and select the ARASAAC pictogram first.</strong>
+            )}
+            {draft.photoUrl ? (
+              <Image
+                alt="Selected real photo"
+                height={100}
+                src={draft.photoUrl}
+                unoptimized
+                width={100}
+              />
+            ) : (
+              <small>No photo selected. Photo-based profiles will show that this word needs a photo.</small>
+            )}
+          </div>
         </div>
         <div className="modal-actions split">
           {draft.id ? (
@@ -607,7 +623,7 @@ export function StudentBoardEditor({
               <Trash2 size={15} /> Remove
             </button>
           ) : <span />}
-          <button className="button button-primary" disabled={!draft.label.trim()} onClick={saveItem} type="button">
+          <button className="button button-primary" disabled={!draft.label.trim() || !draft.arasaacId} onClick={saveItem} type="button">
             Save to {student.firstName}&apos;s board
           </button>
         </div>

@@ -40,9 +40,9 @@ export default function SettingsPage() {
   const detail = {
     school: `${settings.schoolName} · ${settings.className}`,
     members: `${settings.members.length} invited members · Role-based access`,
-    "student-access": "Trusted devices, class codes, QR codes, and visual PINs",
+    "student-access": "Class code and learner-specific space selection",
     privacy: `${settings.retentionDays}-day retention · ${
-      syncMode === "supabase" ? "Encrypted account sync" : "Browser demo data"
+      syncMode === "supabase" ? "Encrypted account sync" : "Sign-in required"
     }`,
   };
 
@@ -101,7 +101,7 @@ export default function SettingsPage() {
           <LockKeyhole size={12} />{" "}
           {syncMode === "supabase"
             ? `Synced as ${accountEmail ?? "educator"}`
-            : "Fictional browser demo"}
+            : "Connecting account"}
         </span>
       </div>
 
@@ -254,11 +254,11 @@ export default function SettingsPage() {
                 ],
               });
               setMemberDraft({ name: "", email: "", role: "Teacher" });
-              showToast("Educator invited in demo mode.");
+              showToast("Team member saved to the workspace directory.");
             }}
             type="button"
           >
-            <Plus size={16} /> Invite educator
+            <Plus size={16} /> Add team member
           </button>
         </div>
       </Modal>
@@ -282,24 +282,11 @@ export default function SettingsPage() {
             value={settings.classCode}
           />
         </div>
-        <div className="settings-toggle-list">
-          {[
-            ["trustedDevices", "Trusted classroom devices"],
-            ["visualPin", "Visual PIN access"],
-            ["qrAccess", "QR code access"],
-          ].map(([key, label]) => (
-            <label key={key}>
-              <span>{label}</span>
-              <input
-                checked={Boolean(settings[key as keyof typeof settings])}
-                onChange={(event) =>
-                  updateSettings({ [key]: event.target.checked })
-                }
-                type="checkbox"
-              />
-            </label>
-          ))}
-        </div>
+        <p className="muted small">
+          After entering this code, the learner chooses from the student
+          profiles in this workspace. Email, QR, and simulated PIN access are
+          not used.
+        </p>
         <div className="modal-actions">
           <button
             className="button button-secondary"
@@ -350,7 +337,7 @@ export default function SettingsPage() {
           <p>
             {syncMode === "supabase"
               ? "This workspace is synchronized across signed-in devices. Database policies limit every read and write to authorized organization members."
-              : "This demo stores fictional data only in this browser. Sign in with an Ariadne email account to synchronize devices."}{" "}
+              : "Sign in with an Ariadne account before changing workspace data."}{" "}
             AI workflows send only the profile fields selected for that draft
             to the configured provider. Do not enter medical records or
             unrelated personally identifiable information.
@@ -362,11 +349,11 @@ export default function SettingsPage() {
             onClick={() => {
               resetDemo();
               setActive(null);
-              showToast("Fictional demo data reset.");
+              showToast("Workspace data cleared.");
             }}
             type="button"
           >
-            Reset fictional demo data
+            Clear workspace data
           </button>
           <button
             className="button button-primary"

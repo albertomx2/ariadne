@@ -8,20 +8,27 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] });
   }
   try {
-    const response = await fetch(
-      `https://api.arasaac.org/api/pictograms/en/search/${encodeURIComponent(query)}`,
-      {
-        signal: AbortSignal.timeout(10_000),
-        next: { revalidate: 86_400 },
-      },
+    const options = {
+      signal: AbortSignal.timeout(10_000),
+      next: { revalidate: 86_400 },
+    };
+    let response = await fetch(
+      `https://api.arasaac.org/v1/pictograms/en/bestsearch/${encodeURIComponent(query)}`,
+      options,
     );
+    if (!response.ok) {
+      response = await fetch(
+        `https://api.arasaac.org/v1/pictograms/en/search/${encodeURIComponent(query)}`,
+        options,
+      );
+    }
     if (!response.ok) throw new Error("ARASAAC search failed.");
     const payload = (await response.json()) as Array<{
       _id: number;
       keywords?: Array<{ keyword?: string }>;
     }>;
     return NextResponse.json({
-      results: payload.slice(0, 16).map((item) => ({
+      results: payload.slice(0, 1).map((item) => ({
         id: String(item._id),
         arasaacId: item._id,
         label:
