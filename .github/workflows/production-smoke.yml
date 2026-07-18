@@ -1,0 +1,21 @@
+name: Production smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-public-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Ariadne production response
+        run: |
+          curl --fail --silent --show-error \
+            --retry 3 \
+            --output ariadne.html \
+            https://ariadne-inclusive.amartinez345.chatgpt.site
+          grep --fixed-strings "Ariadne — Inclusive Classroom Platform" ariadne.html
