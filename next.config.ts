@@ -1,10 +1,23 @@
 import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
-initOpenNextCloudflareForDev();
+const isStaticExport = process.env.ARIADNE_STATIC_EXPORT === "true";
+
+if (!isStaticExport) {
+  initOpenNextCloudflareForDev();
+}
 
 const nextConfig: NextConfig = {
+  ...(isStaticExport
+    ? {
+        output: "export" as const,
+        basePath: "/ariadne",
+        assetPrefix: "/ariadne",
+        trailingSlash: true,
+      }
+    : {}),
   images: {
+    unoptimized: isStaticExport,
     remotePatterns: [
       {
         protocol: "https",

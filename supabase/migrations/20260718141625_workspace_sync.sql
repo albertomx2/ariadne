@@ -105,6 +105,7 @@ end;
 $$;
 
 revoke all on function public.create_workspace(text, text) from public;
+revoke execute on function public.create_workspace(text, text) from anon;
 grant execute on function public.create_workspace(text, text) to authenticated;
 
 do $$

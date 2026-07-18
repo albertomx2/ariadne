@@ -11,6 +11,9 @@ This repository contains the complete web prototype. The interface, source
 code, code comments, sample content, terminology, dates, and product assumptions
 use American English. The included learner records are fictional.
 
+- Source: <https://github.com/albertomx2/ariadne>
+- Dynamic demo: <https://ariadne-inclusive.amartinez345.chatgpt.site>
+
 ## What Ariadne is
 
 Ariadne is not only a student profile builder and it is not intended to replace
@@ -350,6 +353,7 @@ records, exported profiles, or private photos.
 2. Apply migrations in timestamp order:
    - `20260718001543_initial_ariadne_schema.sql`
    - `20260718141625_workspace_sync.sql`
+   - `20260718151000_restrict_workspace_creation.sql`
 3. Copy the project URL and active publishable key into `.env.local`.
 4. Add local and production `/auth/confirm` URLs to the Auth redirect allow
    list.
