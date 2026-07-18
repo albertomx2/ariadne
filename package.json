@@ -1,0 +1,33 @@
+{
+  "name": "ariadne",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource-variable/manrope": "5.2.8",
+    "@fontsource/atkinson-hyperlegible": "5.2.8",
+    "@supabase/ssr": "0.12.3",
+    "@supabase/supabase-js": "2.110.7",
+    "lucide-react": "1.24.0",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "26.1.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.2",
+    "eslint-config-next": "16.2.10",
+    "supabase": "2.109.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3"
+  }
+}

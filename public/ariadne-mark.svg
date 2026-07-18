@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Ariadne route mark</title>
+  <rect width="128" height="128" rx="36" fill="#287265"/>
+  <path d="M33 88V54c0-13 9-22 22-22h18c13 0 22 9 22 22v6c0 12-9 21-21 21H55" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="33" cy="91" r="9" fill="#fff"/>
+  <circle cx="94" cy="58" r="9" fill="#fff"/>
+</svg>

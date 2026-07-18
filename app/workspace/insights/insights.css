@@ -1,0 +1,279 @@
+.insight-principle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 13px 15px;
+  color: #5e6090;
+  background: var(--indigo-soft);
+  border: 1px solid #d9daef;
+  border-radius: 12px;
+}
+
+.insight-period-select {
+  width: 170px;
+}
+
+.usage-chart header select {
+  padding: 6px 8px;
+  color: var(--teal);
+  background: var(--teal-soft);
+  border: 1px solid #bedbd4;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.insight-principle svg {
+  flex: 0 0 auto;
+}
+
+.insight-principle p {
+  margin: 0;
+  font-size: 10px;
+}
+
+.insight-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+
+.insight-metrics article {
+  display: grid;
+  gap: 3px;
+  padding: 17px;
+}
+
+.insight-metrics span {
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.insight-metrics strong {
+  font-size: 27px;
+  letter-spacing: -0.04em;
+}
+
+.insight-metrics small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--teal);
+  font-size: 9px;
+}
+
+.insights-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.usage-chart {
+  padding: 19px;
+}
+
+.usage-chart > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--line);
+}
+
+.usage-chart h2,
+.pattern-card h2 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: -0.025em;
+}
+
+.usage-chart header p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+.usage-chart header button {
+  padding: 5px 8px;
+  color: var(--teal);
+  background: var(--teal-soft);
+  border: 0;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 740;
+}
+
+.bar-chart {
+  display: grid;
+  gap: 15px;
+  padding-top: 18px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 105px 1fr 35px;
+  align-items: center;
+  gap: 10px;
+}
+
+.bar-row > span,
+.bar-row > strong {
+  font-size: 10px;
+}
+
+.bar-row > span {
+  color: var(--ink-soft);
+}
+
+.bar-row > strong {
+  text-align: right;
+}
+
+.bar-row > div {
+  height: 8px;
+  overflow: hidden;
+  background: var(--surface-strong);
+  border-radius: 999px;
+}
+
+.bar-row i {
+  display: block;
+  height: 100%;
+  background: var(--teal);
+  border-radius: 999px;
+}
+
+.pattern-card {
+  padding: 20px;
+  background: #eef0fa;
+  border: 1px solid #d8daef;
+  border-radius: var(--radius);
+}
+
+.pattern-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 17px;
+  color: var(--indigo);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.pattern-card h2 {
+  max-width: 330px;
+}
+
+.pattern-card > p {
+  margin: 8px 0 14px;
+  color: #5e6090;
+  font-size: 11px;
+}
+
+.pattern-evidence {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgb(255 255 255 / 55%);
+  border-radius: 10px;
+}
+
+.pattern-evidence span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #5e6090;
+  font-size: 9px;
+}
+
+.pattern-card .button {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.observation-list {
+  overflow: hidden;
+}
+
+.observation-list article {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px 17px;
+  border-bottom: 1px solid var(--line);
+}
+
+.observation-list article:last-child {
+  border-bottom: 0;
+}
+
+.observation-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: var(--amber);
+  background: var(--amber-soft);
+  border-radius: 11px;
+}
+
+.observation-icon.indigo {
+  color: var(--indigo);
+  background: var(--indigo-soft);
+}
+
+.observation-list strong {
+  font-size: 12px;
+}
+
+.observation-list p {
+  margin: 4px 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+.observation-list small {
+  color: var(--ink-faint);
+  font-size: 9px;
+}
+
+.observation-list button {
+  color: var(--teal);
+  background: transparent;
+  border: 0;
+  font-size: 10px;
+  font-weight: 740;
+}
+
+@media (max-width: 900px) {
+  .insights-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .insight-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .bar-row {
+    grid-template-columns: 85px 1fr 30px;
+  }
+
+  .observation-list article {
+    grid-template-columns: 38px 1fr;
+  }
+
+  .observation-list article > button {
+    grid-column: 2;
+    justify-self: start;
+    padding: 0;
+  }
+}
