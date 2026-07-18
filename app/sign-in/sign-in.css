@@ -189,6 +189,34 @@
   gap: 16px;
 }
 
+.account-action-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 4px;
+  background: #f0f2ed;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+
+.account-action-tabs button {
+  min-height: 38px;
+  padding: 7px 10px;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.account-action-tabs button.active {
+  color: var(--teal);
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
 .signin-error {
   margin: -6px 0 0;
   color: #a13f2d;

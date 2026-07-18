@@ -202,7 +202,11 @@ type AriadneContextValue = AriadneState & {
   showToast: (message: string) => void;
   accountAvailable: boolean;
   accountEmail: string | null;
-  requestSignInLink: (email: string) => Promise<{ error?: string }>;
+  authenticateEducator: (
+    action: "sign-in" | "create",
+    email: string,
+    password: string,
+  ) => Promise<{ error?: string }>;
   signIn: (session: NonNullable<Session>) => void;
   signOut: () => void;
   setActiveStudent: (studentId: string) => void;
@@ -962,18 +966,23 @@ export function AriadneProvider({ children }: { children: React.ReactNode }) {
       showToast,
       accountAvailable: Boolean(supabase),
       accountEmail,
-      requestSignInLink: async (email) => {
+      authenticateEducator: async (action, email, password) => {
         if (!supabase) {
           return {
             error:
               "Account synchronization is not configured on this deployment.",
           };
         }
-        const redirectTo = `${window.location.origin}/auth/confirm?next=/workspace`;
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: redirectTo },
-        });
+        const { data, error } =
+          action === "create"
+            ? await supabase.auth.signUp({ email, password })
+            : await supabase.auth.signInWithPassword({ email, password });
+        if (!error && action === "create" && !data.session) {
+          return {
+            error:
+              "The account was created but could not start a session. Ask the workspace owner to verify the Supabase email confirmation setting.",
+          };
+        }
         return error ? { error: error.message } : {};
       },
       syncMode,

@@ -92,9 +92,10 @@ export default function SettingsPage() {
         </p>
         <h2 style={{ margin: 0, fontSize: 18 }}>Ariadne account security</h2>
         <p className="muted small">
-          Educators use a passwordless email account. Workspace data is isolated
-          by organization membership and synchronized through database row-level
-          security. Google Workspace and Microsoft Entra are not enabled yet.
+          Educators use an Ariadne email-and-password account. Workspace data is
+          isolated by organization membership and synchronized through database
+          row-level security. Google Workspace and Microsoft Entra are not
+          enabled yet.
         </p>
         <span className="status-pill status-ready" style={{ marginTop: 8 }}>
           <LockKeyhole size={12} />{" "}

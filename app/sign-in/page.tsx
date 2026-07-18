@@ -20,11 +20,14 @@ import "./sign-in.css";
 
 export default function SignInPage() {
   const [mode, setMode] = useState<"educator" | "student">("educator");
+  const [accountAction, setAccountAction] = useState<"sign-in" | "create">(
+    "sign-in",
+  );
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [classCode, setClassCode] = useState("");
   const [visualPin, setVisualPin] = useState("");
   const [authPending, setAuthPending] = useState(false);
-  const [authSent, setAuthSent] = useState(false);
   const [dialog, setDialog] = useState<
     null | "qr" | "pin" | "trusted" | "student-picker"
   >(null);
@@ -37,7 +40,7 @@ export default function SignInPage() {
     setActiveStudent,
     showToast,
     accountAvailable,
-    requestSignInLink,
+    authenticateEducator,
   } = useAriadne();
 
   function enterStudent(studentId = "maya", provider = "class code") {
@@ -120,10 +123,47 @@ export default function SignInPage() {
             <div className="signin-form">
               <div>
                 <p className="eyebrow">Teacher workspace</p>
-                <h2>Welcome to Ariadne</h2>
+                <h2>
+                  {accountAction === "sign-in"
+                    ? "Welcome to Ariadne"
+                    : "Create your workspace"}
+                </h2>
                 <p className="muted">
-                  Sign in to keep your classroom synchronized across devices.
+                  {accountAction === "sign-in"
+                    ? "Sign in to keep your classroom synchronized across devices."
+                    : "Create a free educator account for this hackathon demo."}
                 </p>
+              </div>
+
+              <div
+                className="account-action-tabs"
+                role="tablist"
+                aria-label="Educator account action"
+              >
+                <button
+                  aria-selected={accountAction === "sign-in"}
+                  className={accountAction === "sign-in" ? "active" : ""}
+                  onClick={() => {
+                    setAccountAction("sign-in");
+                    setError("");
+                  }}
+                  role="tab"
+                  type="button"
+                >
+                  Sign in
+                </button>
+                <button
+                  aria-selected={accountAction === "create"}
+                  className={accountAction === "create" ? "active" : ""}
+                  onClick={() => {
+                    setAccountAction("create");
+                    setError("");
+                  }}
+                  role="tab"
+                  type="button"
+                >
+                  Create account
+                </button>
               </div>
 
               <div className="field">
@@ -141,6 +181,27 @@ export default function SignInPage() {
                 </div>
               </div>
 
+              <div className="field">
+                <label htmlFor="educator-password">Password</label>
+                <div className="input-with-icon">
+                  <LockKeyhole size={18} aria-hidden="true" />
+                  <input
+                    autoComplete={
+                      accountAction === "create"
+                        ? "new-password"
+                        : "current-password"
+                    }
+                    id="educator-password"
+                    minLength={8}
+                    name="password"
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="At least 8 characters"
+                    type="password"
+                    value={password}
+                  />
+                </div>
+              </div>
+
               <button
                 className="button button-primary auth-submit"
                 disabled={authPending}
@@ -149,31 +210,40 @@ export default function SignInPage() {
                     setError("Enter a valid school email address.");
                     return;
                   }
+                  if (password.length < 8) {
+                    setError("Use a password with at least 8 characters.");
+                    return;
+                  }
                   setError("");
                   setAuthPending(true);
-                  const result = await requestSignInLink(email);
+                  const result = await authenticateEducator(
+                    accountAction,
+                    email,
+                    password,
+                  );
                   setAuthPending(false);
                   if (result.error) {
                     setError(result.error);
                     return;
                   }
-                  setAuthSent(true);
+                  showToast(
+                    accountAction === "create"
+                      ? "Your synchronized workspace is ready."
+                      : "Signed in successfully.",
+                  );
+                  router.push("/workspace");
                 }}
                 type="button"
               >
-                {authPending ? "Sending secure link…" : "Email me a secure link"}
+                {authPending
+                  ? accountAction === "create"
+                    ? "Creating account…"
+                    : "Signing in…"
+                  : accountAction === "create"
+                    ? "Create synchronized workspace"
+                    : "Sign in to workspace"}
                 {!authPending ? <ArrowRight size={17} /> : null}
               </button>
-
-              {authSent ? (
-                <div className="auth-inline-success" role="status">
-                  <BadgeCheck size={18} />
-                  <span>
-                    Check <strong>{email}</strong> and open the Ariadne link on
-                    this device. The same account can be used on another device.
-                  </span>
-                </div>
-              ) : null}
 
               {error ? <p className="signin-error">{error}</p> : null}
 
@@ -192,7 +262,7 @@ export default function SignInPage() {
               </Link>
 
               <p className="signin-legal">
-                Ariadne currently uses passwordless email accounts. Google and
+                The same educator account works across devices. Google and
                 Microsoft sign-in are intentionally not enabled yet.
                 {!accountAvailable
                   ? " Remote accounts require the Supabase environment variables."

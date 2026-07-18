@@ -101,12 +101,12 @@ an activity package updates its linked schedule item and Student Space.
 Google Workspace and Microsoft Entra authentication are intentionally **not**
 implemented yet.
 
-The current production architecture uses Ariadne passwordless email accounts
+The public hackathon architecture uses Ariadne email-and-password accounts
 through Supabase Auth:
 
-1. An educator enters a school email.
-2. Supabase sends a secure sign-in link.
-3. The link exchanges a PKCE code for a session.
+1. An educator creates an account with an email and password or signs in.
+2. Supabase creates a secure session without relying on outbound email.
+3. The same credentials can start a session on another device.
 4. The first authenticated educator creates a private organization workspace.
 5. The browser loads the organization's versioned workspace snapshot.
 6. Local edits are debounced and written to Supabase.
@@ -116,6 +116,11 @@ through Supabase Auth:
 The app still supports a clearly labeled fictional browser demo when Supabase is
 not configured. In that mode, `localStorage`, `BroadcastChannel`, and storage
 events synchronize tabs in the same browser only.
+
+Email confirmation is disabled only to keep the zero-cost public hackathon demo
+usable without a custom SMTP provider. A production education deployment should
+verify school email ownership or add an approved identity provider before using
+real learner information.
 
 ### Security boundaries
 
@@ -301,7 +306,7 @@ app/
   api/ai/                 Authenticated, schema-constrained AI endpoints
   api/photos/             Curated photo adapter
   api/pictograms/         ARASAAC adapter
-  auth/confirm/           Passwordless auth callback
+  auth/confirm/           Reserved callback for future identity providers
   sign-in/                Educator and learner access
   student/                Learner-facing space
   workspace/              Teacher routes
@@ -375,9 +380,10 @@ records, exported profiles, or private photos.
    - `20260718141625_workspace_sync.sql`
    - `20260718151000_restrict_workspace_creation.sql`
 3. Copy the project URL and active publishable key into `.env.local`.
-4. Add local and production `/auth/confirm` URLs to the Auth redirect allow
-   list.
-5. Keep email authentication enabled.
+4. Keep email authentication enabled and disable Confirm email for the
+   zero-cost hackathon account flow.
+5. Add local and production `/auth/confirm` URLs to the redirect allowlist for
+   future identity-provider work.
 6. Do not enable Google or Microsoft providers yet.
 7. Verify RLS and performance advisors.
 8. Test two independent browser profiles or physical devices with the same
@@ -399,7 +405,7 @@ pnpm build:cloudflare
 Recommended manual acceptance test:
 
 1. Open `/sign-in` on two devices.
-2. Use the same Ariadne email account on both.
+2. Use the same Ariadne email and password on both.
 3. Add a learner on device A.
 4. Confirm the learner appears on device B.
 5. Change the learner's representation mode.
@@ -413,7 +419,7 @@ Recommended manual acceptance test:
 ## Deployment
 
 The public app deploys from `albertomx2/ariadne` to Vercel as a standard Next.js
-server application. Vercel preserves Auth callbacks, dynamic API routes, and AI
+server application. Vercel preserves Auth sessions, dynamic API routes, and AI
 requests. Production provides only the Supabase project URL and publishable
 key to the browser; the GitHub Models token remains server-only, and no
 Supabase secret or service-role key is used.
