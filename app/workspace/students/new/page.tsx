@@ -62,7 +62,7 @@ export default function NewStudentPage() {
     "checking" | "ready" | "working" | "offline"
   >("checking");
   const [assistantProvider, setAssistantProvider] = useState<
-    "vercel-ai-gateway" | "ollama" | null
+    "github-models" | "vercel-ai-gateway" | "ollama" | "local-aac-engine" | null
   >(null);
   const [completeEnough, setCompleteEnough] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -84,7 +84,11 @@ export default function NewStudentPage() {
         if (!response.ok) throw new Error("AI provider unavailable");
         return response.json() as Promise<{
           ready: boolean;
-          provider?: "vercel-ai-gateway" | "ollama";
+          provider?:
+            | "github-models"
+            | "vercel-ai-gateway"
+            | "ollama"
+            | "local-aac-engine";
         }>;
       })
       .then((result) => {
@@ -367,7 +371,7 @@ export default function NewStudentPage() {
                   ? "AI provider unavailable"
                   : assistantProvider === "ollama"
                     ? "Qwen 2.5 7B · local"
-                    : "GPT-5 mini · Vercel AI"}
+                    : "Ariadne AI · resilient"}
               </span>
             </header>
 

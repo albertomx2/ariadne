@@ -9,20 +9,23 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const ready = await aiHealth();
+    const hostedReady = await aiHealth();
     return NextResponse.json({
-      ready,
+      ready: true,
+      hostedReady,
+      fallbackReady: true,
       model: AI_MODEL,
       provider: aiProviderMode(),
     });
   } catch {
     return NextResponse.json(
       {
-        ready: false,
+        ready: true,
+        hostedReady: false,
+        fallbackReady: true,
         model: AI_MODEL,
-        provider: aiProviderMode(),
+        provider: "local-aac-engine",
       },
-      { status: 503 },
     );
   }
 }

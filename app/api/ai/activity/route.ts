@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { vocabulary } from "@/lib/demo-data";
 import { hasAiAccess } from "@/lib/ai-access";
+import { localActivityDraft } from "@/lib/ai-local-fallback";
 import { aiChat } from "@/lib/ai-provider";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const activitySchema = {
   type: "object",
@@ -125,6 +127,7 @@ Rules:
 - Return concise American English and only the required structured JSON.`;
 
 export async function POST(request: Request) {
+  const fallbackRequest = request.clone();
   try {
     if (!(await hasAiAccess())) {
       return NextResponse.json(
@@ -288,15 +291,26 @@ export async function POST(request: Request) {
       activityVocabularyIds,
       steps,
     });
-  } catch (error) {
+  } catch {
+    try {
+      const body = (await fallbackRequest.json()) as {
+        activity?: string;
+        profiles?: unknown[];
+      };
+      if (body.activity?.trim() && body.profiles?.length) {
+        return NextResponse.json(
+          localActivityDraft({
+            activity: body.activity.trim(),
+            profiles: body.profiles,
+          }),
+        );
+      }
+    } catch {
+      // The normal validation response below remains the source of truth.
+    }
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "The AI service could not respond.",
-      },
-      { status: 503 },
+      { error: "The activity could not be analyzed. Check the activity text." },
+      { status: 400 },
     );
   }
 }

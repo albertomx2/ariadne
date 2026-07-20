@@ -514,23 +514,15 @@
 
 @media (max-width: 500px) {
   .signin-story-inner {
-    padding: 24px 20px 34px;
+    padding: 18px 20px;
   }
 
-  .signin-copy {
-    margin-top: 52px;
-  }
-
-  .signin-copy h1 {
-    font-size: 43px;
-  }
-
+  .signin-copy,
   .signin-trust {
-    display: grid;
-    gap: 10px;
+    display: none;
   }
 
   .signin-panel {
-    padding: 40px 16px 58px;
+    padding: 24px 16px 42px;
   }
 }

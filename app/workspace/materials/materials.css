@@ -316,4 +316,64 @@
   .material-filters .select {
     flex: 1;
   }
+
+  .materials-table {
+    display: grid;
+    gap: 10px;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .materials-table-head {
+    display: none;
+  }
+
+  .material-row {
+    width: 100%;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 12px;
+    padding: 14px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .material-name {
+    grid-column: 1 / -1;
+  }
+
+  .material-name strong {
+    white-space: normal;
+  }
+
+  .material-student,
+  .material-provider,
+  .material-edited {
+    display: grid;
+    gap: 2px;
+  }
+
+  .material-student::before,
+  .material-provider::before,
+  .material-edited::before {
+    content: attr(data-label);
+    color: var(--ink-faint);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .material-status-action {
+    justify-self: end;
+  }
+
+  .material-row-actions {
+    align-self: end;
+    justify-self: end;
+  }
 }

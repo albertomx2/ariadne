@@ -274,7 +274,9 @@ export default function MaterialsPage() {
                 <span>{material.type}</span>
               </div>
             </button>
-            <span>{material.student}</span>
+            <span className="material-student" data-label="Student">
+              {material.student}
+            </span>
             <Link
               aria-label={`Open ${material.status === "review" ? "educator review" : material.status === "draft" ? "draft" : "published material"} for ${material.title}`}
               className="material-status-action"
@@ -290,8 +292,12 @@ export default function MaterialsPage() {
                     : "View"}
               </small>
             </Link>
-            <span>{material.symbolProvider}</span>
-            <span>{material.edited}</span>
+            <span className="material-provider" data-label="Visual system">
+              {material.symbolProvider}
+            </span>
+            <span className="material-edited" data-label="Last edited">
+              {material.edited}
+            </span>
             <div className="material-row-actions">
               <button
                 aria-label={`Duplicate ${material.title}`}

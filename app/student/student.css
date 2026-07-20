@@ -1121,6 +1121,22 @@
     padding: 12px;
   }
 
+  .student-identity {
+    min-width: 0;
+  }
+
+  .student-identity div {
+    min-width: 0;
+  }
+
+  .student-identity strong,
+  .student-identity div span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .message-bar {
     min-height: 72px;
     grid-template-columns: 1fr 56px 56px;
@@ -1249,5 +1265,48 @@
 
   .step-actions.three {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 500px) {
+  .board-layout {
+    display: block;
+  }
+
+  .aac-categories {
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    margin-bottom: 8px;
+    padding-bottom: 3px;
+  }
+
+  .aac-categories button {
+    width: 76px;
+    min-height: 58px;
+    flex: 0 0 76px;
+  }
+
+  .aac-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .message-bar {
+    grid-template-columns: minmax(0, 1fr) 52px 52px;
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .message-words {
+    padding: 4px;
+  }
+
+  .prediction-strip {
+    padding: 6px;
+  }
+
+  .prediction-strip button {
+    min-width: 104px;
+    padding: 5px 8px;
   }
 }

@@ -61,32 +61,40 @@ async function openAiCompatibleChat({
   provider: string;
   extraHeaders?: Record<string, string>;
 }) {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...extraHeaders,
-    },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      messages,
-      stream: false,
-      temperature: 0,
-      max_tokens: 900,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: schemaName(format),
-          description:
-            "An educator-reviewed Ariadne AAC and classroom-access draft.",
-          schema: format,
-          strict: true,
-        },
+  const request = (strictSchema: boolean) =>
+    fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...extraHeaders,
       },
-    }),
-    signal: AbortSignal.timeout(60_000),
-  });
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages,
+        stream: false,
+        temperature: 0,
+        max_tokens: 1800,
+        response_format: strictSchema
+          ? {
+              type: "json_schema",
+              json_schema: {
+                name: schemaName(format),
+                description:
+                  "An educator-reviewed Ariadne AAC and classroom-access draft.",
+                schema: format,
+                strict: true,
+              },
+            }
+          : { type: "json_object" },
+      }),
+      signal: AbortSignal.timeout(45_000),
+    });
+
+  let response = await request(true);
+  if (response.status === 400 || response.status === 422) {
+    response = await request(false);
+  }
 
   const payload = (await response.json().catch(() => null)) as
     | {

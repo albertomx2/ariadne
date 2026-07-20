@@ -7,9 +7,11 @@ import {
   type ProfileDraft,
 } from "@/lib/ai-contracts";
 import { hasAiAccess } from "@/lib/ai-access";
+import { locallyEnrichProfileDraft } from "@/lib/ai-local-fallback";
 import { aiChat } from "@/lib/ai-provider";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const AAC_SYSTEM_PROMPT = `You are Ariadne Profile Guide, a careful U.S. school
 AAC intake assistant for educators. You conduct a natural conversation and
@@ -483,6 +485,7 @@ function buildAssistantReply(
 }
 
 export async function POST(request: Request) {
+  const fallbackRequest = request.clone();
   try {
     if (!(await hasAiAccess())) {
       return NextResponse.json(
@@ -728,15 +731,54 @@ export async function POST(request: Request) {
       draft,
       completeEnoughToReview: completeEnoughToReview(draft),
     } satisfies ProfileAssistantResponse);
-  } catch (error) {
+  } catch {
+    try {
+      const body = (await fallbackRequest.json()) as {
+        messages?: AiChatMessage[];
+        draft?: ProfileDraft;
+      };
+      const messages = (body.messages ?? [])
+        .filter(
+          (message) =>
+            (message.role === "user" || message.role === "assistant") &&
+            typeof message.content === "string",
+        )
+        .slice(-24);
+      const lastUserMessage =
+        [...messages].reverse().find((message) => message.role === "user")
+          ?.content ?? "";
+      if (lastUserMessage) {
+        const previousAssistantMessage =
+          [...messages]
+            .reverse()
+            .find((message) => message.role === "assistant")?.content ?? "";
+        const currentDraft = validateDraft(body.draft);
+        const draft = locallyEnrichProfileDraft({
+          previous: currentDraft,
+          message: lastUserMessage,
+          previousQuestion: previousAssistantMessage,
+        });
+        const language = preferredReplyLanguage(messages);
+        const reply = buildAssistantReply(
+          currentDraft,
+          draft,
+          lastUserMessage,
+          "",
+          language,
+          messages,
+        );
+        return NextResponse.json({
+          reply,
+          draft,
+          completeEnoughToReview: completeEnoughToReview(draft),
+        } satisfies ProfileAssistantResponse);
+      }
+    } catch {
+      // Return a concise validation error when the request itself is unusable.
+    }
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "The AI service could not respond.",
-      },
-      { status: 503 },
+      { error: "The profile message could not be analyzed. Check the text." },
+      { status: 400 },
     );
   }
 }
