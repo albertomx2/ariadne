@@ -1,10 +1,7 @@
 import {
   ArrowRight,
-  BarChart3,
-  CalendarCheck2,
   Check,
   HeartHandshake,
-  LayoutGrid,
   MessageSquareText,
   ShieldCheck,
   Sparkles,
@@ -76,6 +73,45 @@ function AriadneWordmark() {
   );
 }
 
+function RedThread({ className = "", id }: { className?: string; id: string }) {
+  const path =
+    "M-42 552 C118 610 176 500 292 548 C370 580 335 652 418 646 C503 640 494 542 416 538 C344 534 336 622 422 642 C560 674 614 534 750 574 C854 605 820 668 928 651 C1040 634 1074 526 1204 558 C1320 586 1372 526 1490 518";
+
+  return (
+    <svg
+      aria-hidden="true"
+      className={`red-thread ${className}`}
+      preserveAspectRatio="none"
+      viewBox="0 0 1440 690"
+    >
+      <defs>
+        <filter id={`${id}-roughness`} x="-10%" y="-20%" width="120%" height="140%">
+          <feTurbulence baseFrequency="0.012 0.11" numOctaves="2" result="noise" seed="7" type="fractalNoise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.1" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <linearGradient id={`${id}-red`} x1="0" x2="1">
+          <stop offset="0" stopColor="#c92f27" />
+          <stop offset="0.48" stopColor="#ee4c3e" />
+          <stop offset="1" stopColor="#ba251f" />
+        </linearGradient>
+      </defs>
+      <g filter={`url(#${id}-roughness)`}>
+        <path className="thread-shadow" d={path} />
+        <path className="thread-body" d={path} stroke={`url(#${id}-red)`} />
+        <path className="thread-fiber thread-fiber-dark" d={path} />
+        <path className="thread-fiber thread-fiber-light" d={path} />
+        <path className="thread-fiber thread-fiber-cross" d={path} />
+      </g>
+      <g className="thread-fray">
+        <path d="M4 565 L-30 585" />
+        <path d="M7 559 L-34 561" />
+        <path d="M10 554 L-27 539" />
+        <path d="M13 550 L-18 522" />
+      </g>
+    </svg>
+  );
+}
+
 export default function Home() {
   return (
     <main className="landing-page">
@@ -98,8 +134,7 @@ export default function Home() {
       </header>
 
       <section className="landing-hero" id="top">
-        <div className="hero-thread hero-thread-left" aria-hidden="true" />
-        <div className="hero-thread hero-thread-right" aria-hidden="true" />
+        <RedThread className="hero-thread-art" id="hero-thread" />
         <div className="hero-copy">
           <p className="landing-kicker">
             <span /> Inclusive classroom participation
@@ -127,56 +162,20 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="hero-product" aria-label="Ariadne product preview">
-          <div className="product-window">
-            <div className="product-window-bar">
-              <span><i /><i /><i /></span>
-              <b>Ariadne · Ms. Rivera&apos;s class</b>
-              <small>Live sync</small>
-            </div>
-            <div className="product-layout">
-              <aside>
-                <div className="mini-logo">A</div>
-                <span className="active"><LayoutGrid size={15} /> Today</span>
-                <span><UsersRound size={15} /> Learners</span>
-                <span><CalendarCheck2 size={15} /> Schedule</span>
-                <span><BarChart3 size={15} /> Insights</span>
-              </aside>
-              <div className="product-main">
-                <header>
-                  <div><small>HAPPENING NOW</small><strong>Morning meeting</strong></div>
-                  <span>3 learners</span>
-                </header>
-                <div className="product-grid">
-                  <article className="product-profile-card">
-                    <p>LEARNER PROFILE</p>
-                    <div className="profile-person"><i>M</i><span><strong>Maya</strong><small>Photos + text · 3 × 3</small></span></div>
-                    <ul>
-                      <li><Check size={13} /> One step at a time</li>
-                      <li><Check size={13} /> Extra response time</li>
-                      <li><Check size={13} /> Quiet workspace</li>
-                    </ul>
-                  </article>
-                  <article className="product-board-card">
-                    <p>COMMUNICATION READY</p>
-                    <div className="visual-choices">
-                      <span><b>I</b><small>I</small></span>
-                      <span><b>●</b><small>WANT</small></span>
-                      <span><b>＋</b><small>MORE</small></span>
-                      <span><b>✓</b><small>HELP</small></span>
-                    </div>
-                  </article>
-                </div>
-                <div className="product-activity-card">
-                  <span><Sparkles size={18} /></span>
-                  <div><small>NEXT ACTIVITY</small><strong>Shared reading circle</strong></div>
-                  <b>Ready</b>
-                </div>
-              </div>
-            </div>
+        <div className="hero-product" aria-label="Ariadne student communication board preview">
+          <div className="product-screenshot-frame">
+            <Image
+              alt="Ariadne student communication board showing Maya's personalized ARASAAC pictograms and classroom vocabulary"
+              className="product-screenshot"
+              height={1792}
+              priority
+              sizes="(max-width: 1050px) calc(100vw - 40px), 56vw"
+              src="/ariadne-student-communication-board.png"
+              width={3420}
+            />
           </div>
           <div className="floating-proof proof-one"><ShieldCheck size={17} /> FERPA-minded privacy</div>
-          <div className="floating-proof proof-two"><Sparkles size={17} /> Profile-aware supports</div>
+          <div className="floating-proof proof-two"><Sparkles size={17} /> Personalized learner view</div>
         </div>
       </section>
 
@@ -262,7 +261,7 @@ export default function Home() {
       </section>
 
       <section className="final-cta">
-        <div className="cta-thread" aria-hidden="true" />
+        <RedThread className="cta-thread-art" id="cta-thread" />
         <div>
           <p className="landing-kicker light"><span /> Start with one learner</p>
           <h2>Make the path to participation clearer.</h2>
