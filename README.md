@@ -14,6 +14,36 @@ assumptions use American English. New accounts start with an empty workspace.
 - Source: <https://github.com/albertomx2/ariadne>
 - Public Vercel application: <https://ariadne-opal.vercel.app>
 
+## How Codex and GPT-5.6 supported development
+
+The original idea for Ariadne, the problem it addresses, its name and brand
+direction, the product requirements, feature priorities, accessibility goals,
+and final design decisions came from our team. We directed the project
+step-by-step through detailed prompts, classroom scenarios, screenshots,
+usability feedback, and repeated testing. We decided what to build, evaluated
+each iteration, identified inconsistencies, and approved the final behavior.
+
+OpenAI Codex with GPT-5.6 served as our coding assistant throughout that
+process. Under our direction, it helped us:
+
+- turn our product requirements into an implementation plan;
+- scaffold and extend the responsive Next.js application;
+- implement TypeScript, React, CSS, Supabase synchronization, and provider
+  integrations;
+- diagnose bugs and improve consistency across educator and learner views;
+- test responsive behavior, build validation, and key user flows;
+- document the architecture and assist with GitHub and Vercel deployment.
+
+Codex did not originate the Ariadne concept or independently determine the
+product's educational and AAC decisions. It translated our instructions and
+feedback into code, proposed implementation options, and helped verify the
+result. Our team remained responsible for the product direction, requirements,
+review, and final decisions at every stage.
+
+This development-time use of Codex and GPT-5.6 is separate from Ariadne's
+in-product AI provider. The public demo's bounded profile and activity workflows
+use the provider described in the [AI design](#ai-design) section below.
+
 ## What Ariadne is
 
 Ariadne is not only a student profile builder and it is not intended to replace
